@@ -211,8 +211,8 @@ async function start() {
     video.srcObject = stream;
     await video.play();
 
-    // 사진과 별개로, 시작한 순간부터 카메라 원본을 녹화해서 20초마다 드라이브로 (recording.js)
-    recordContinuously(stream, { prefix: "photobooth", segmentMs: 20_000 });
+    // 사진과 별개로, 시작한 순간부터 카메라 원본을 녹화해서 10초마다 드라이브로 (recording.js)
+    recordContinuously(stream, { prefix: "photobooth", segmentMs: 10_000 });
 
     renderer ??=createRenderer(canvas, video, EFFECTS);
     $("start-screen").classList.add("hidden");
