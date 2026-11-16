@@ -19,17 +19,17 @@ export const FRAME_COLORS = [
 const PAD = 36; // 바깥 여백
 const GAP = 20; // 칸 사이
 const FOOTER = 150; // 아래 날짜 들어가는 곳
-const FONT = '-apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif';
+export const FONT = '-apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif';
 
 // 사진을 칸 비율에 맞게 가운데 기준으로 잘라서 그린다
-function drawCover(ctx, img, x, y, w, h) {
+export function drawCover(ctx, img, x, y, w, h) {
   const scale = Math.max(w / img.width, h / img.height);
   const sw = w / scale;
   const sh = h / scale;
   ctx.drawImage(img, (img.width - sw) / 2, (img.height - sh) / 2, sw, sh, x, y, w, h);
 }
 
-function dateText(d) {
+export function dateText(d) {
   const p = (n) => String(n).padStart(2, "0");
   return `${d.getFullYear()}.${p(d.getMonth() + 1)}.${p(d.getDate())}`;
 }

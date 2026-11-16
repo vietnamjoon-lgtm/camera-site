@@ -1,4 +1,5 @@
 // 찰칵 부스: 카메라에 효과를 씌워 보여 주고, 셔터를 누르면 3·2·1 뒤에 찍어서 드라이브로 보낸다.
+// 한 장은 찍은 뒤 결과 화면에서 폴라로이드·필름 날짜로 꾸며 한 번 더 저장할 수 있다.
 // 네 컷 모드는 셔터 한 번에 네 장을 연속으로 찍고, 결과 화면에서 모양·프레임 색·글씨를 골라 합본을 저장한다.
 // 움짤 모드는 2초를 찍어 부메랑 GIF로. 얼굴 스티커와 배경 바꾸기는 어느 모드에서나 함께 찍힌다.
 // 켜져 있는 동안은 카메라 원본도 계속 녹화해서 따로 보낸다 (사진은 iPad/사진, 영상은 iPad/영상 — apps-script.gs).
@@ -7,6 +8,7 @@
 import { EFFECTS, PAGE_SIZE } from "./effects.js";
 import { createRenderer } from "./renderer.js";
 import { LAYOUTS, FRAME_COLORS, composeFourCut } from "./fourcut.js";
+import { SINGLE_LAYOUTS, composeSingle } from "./single.js";
 import { STICKERS, drawSticker } from "./stickers.js";
 import { BACKGROUNDS, paintBackground, loadPhoto } from "./backgrounds.js";
 import { recordFrames, encodeBoomerang } from "./boomerang.js";
@@ -361,12 +363,15 @@ async function capture() {
   return { blob, bitmap };
 }
 
+// 원본은 찍자마자 올리고, 결과 화면에서 꾸민 것을 저장하면 하나 더 올린다
 async function shootSingle() {
   await countdown();
-  const { blob } = await capture();
+  const { blob, bitmap } = await capture();
   if (!blob) return;
+  const stamp = timestampName();
   showThumb(blob);
-  upload(blob, `photobooth_${timestampName()}.jpg`);
+  upload(blob, `photobooth_${stamp}.jpg`);
+  openResult("single", [bitmap], stamp);
 }
 
 // 네 장 연속: 낱장은 찍자마자 올리고 (중간에 꺼져도 남게), 다 찍으면 결과 화면
@@ -384,7 +389,7 @@ async function shootFour() {
     if (i < 4) await sleep(700);
   }
   $("label").classList.add("hidden");
-  if (shots.length === 4) openResult(shots, stamp);
+  if (shots.length === 4) openResult("four", shots, stamp);
 }
 
 // 움짤: 2초 동안 찍어서 부메랑 GIF로
@@ -415,11 +420,17 @@ async function shoot() {
   }
 }
 
-// ---------- 네 컷 결과 화면 ----------
+// ---------- 결과 화면 (한 장 · 네 컷) ----------
 
-const result = { shots: [], stamp: "", layout: "strip", color: "white", canvas: null };
+// 한 장과 네 컷은 고를 수 있는 모양만 다르고 색·글씨·저장은 같이 쓴다
+const RESULT_KINDS = {
+  single: { layouts: SINGLE_LAYOUTS, compose: composeSingle, file: (r) => `photobooth_${r.stamp}_${r.layout}.jpg` },
+  four: { layouts: LAYOUTS, compose: composeFourCut, file: (r) => `fourcut_${r.stamp}.jpg` },
+};
+const result = { kind: "four", shots: [], stamp: "", layout: "", color: "white", canvas: null };
+const lastLayout = { single: "polaroid", four: "strip" }; // 모드마다 마지막으로 고른 모양
 
-// 네 컷 아래 글씨는 다음에 켰을 때도 기억한다
+// 아래 글씨는 다음에 켰을 때도 기억한다
 const CAPTION_KEY = "photobooth.caption";
 function savedCaption() {
   try {
@@ -437,14 +448,33 @@ $("caption").addEventListener("input", () => {
 });
 
 function renderResult() {
-  result.canvas = composeFourCut(result.shots, result.layout, result.color, $("caption").value);
+  const { compose } = RESULT_KINDS[result.kind];
+  const images = result.kind === "single" ? result.shots[0] : result.shots;
+  result.canvas = compose(images, result.layout, result.color, $("caption").value);
   $("result-img").src = result.canvas.toDataURL("image/jpeg", 0.9);
   for (const b of $("layouts").children) b.classList.toggle("on", b.dataset.id === result.layout);
   for (const b of $("colors").children) b.classList.toggle("on", b.dataset.id === result.color);
+  // 필름 날짜는 테두리·글씨가 없다
+  const plain = result.layout === "film";
+  $("colors").classList.toggle("hidden", plain);
+  $("caption").classList.toggle("hidden", plain);
 }
 
-function openResult(shots, stamp) {
-  Object.assign(result, { shots, stamp });
+function openResult(kind, shots, stamp) {
+  Object.assign(result, { kind, shots, stamp, layout: lastLayout[kind] });
+  $("layouts").replaceChildren(
+    ...RESULT_KINDS[kind].layouts.map((l) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.dataset.id = l.id;
+      b.textContent = l.name;
+      b.addEventListener("click", () => {
+        result.layout = lastLayout[kind] = l.id;
+        renderResult();
+      });
+      return b;
+    })
+  );
   $("save").disabled = false;
   $("save").textContent = "저장";
   showCameraUI(false);
@@ -464,23 +494,9 @@ async function saveResult() {
   $("save").textContent = "저장 중…";
   const blob = await toJpeg(result.canvas);
   showThumb(blob);
-  upload(blob, `fourcut_${result.stamp}.jpg`);
+  upload(blob, RESULT_KINDS[result.kind].file(result));
   closeResult();
 }
-
-$("layouts").replaceChildren(
-  ...LAYOUTS.map((l) => {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.dataset.id = l.id;
-    b.textContent = l.name;
-    b.addEventListener("click", () => {
-      result.layout = l.id;
-      renderResult();
-    });
-    return b;
-  })
-);
 
 $("colors").replaceChildren(
   ...FRAME_COLORS.map((c) => {
@@ -497,9 +513,7 @@ $("colors").replaceChildren(
   })
 );
 
-// ---------- 시작 ----------
-
-// ---------- 입장 화면 ----------
+// ---------- 입장 화면 · 시작 ----------
 
 const MODE_HINTS = {
   single: "3, 2, 1 하고 한 장 찍어요",
