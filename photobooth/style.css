@@ -50,244 +50,251 @@ button {
 
 /* ----- 시작 화면 ----- */
 
-/* 작은 화면에서는 위아래로 넘겨 볼 수 있게 */
 #start-screen {
   position: fixed;
   inset: 0;
   overflow-x: hidden;
   overflow-y: auto;
-  text-align: center;
   background: #000;
 }
 
-/* 뒤에서 천천히 움직이는 흐릿한 빛 */
-.aurora {
-  position: fixed;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
+/* 세로 화면: 위에 네 컷, 아래에 글씨와 셔터. 가로 화면은 아래에서 두 칸으로 */
+.booth {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  padding: 0 24px calc(env(safe-area-inset-bottom, 0px) + 32px);
 }
 
-.aurora i {
-  position: absolute;
-  width: 60vmax;
-  height: 60vmax;
-  border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.35;
-  animation: drift 22s ease-in-out infinite alternate;
+.print {
+  position: relative;
+  margin: 0;
+  padding-top: env(safe-area-inset-top, 0px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
-.aurora i:nth-child(1) {
-  left: -20vmax;
-  top: -20vmax;
-  background: #0a84ff;
+/* 사진이 나오는 기계 구멍 */
+.slot {
+  position: relative;
+  z-index: 1;
+  width: calc(var(--strip-w) + 36px);
+  height: 14px;
+  border-radius: 0 0 8px 8px;
+  background: #2a2a2c;
+  box-shadow: inset 0 -4px 0 #000;
 }
 
-.aurora i:nth-child(2) {
-  right: -25vmax;
-  top: 10vmax;
-  background: #bf5af2;
-  animation-duration: 28s;
-  animation-delay: -8s;
+.print {
+  --strip-h: min(54vh, 560px);
+  --strip-w: calc(var(--strip-h) * 0.327);
 }
 
-.aurora i:nth-child(3) {
-  left: 10vmax;
-  bottom: -30vmax;
-  background: #ff375f;
-  opacity: 0.25;
-  animation-duration: 34s;
-  animation-delay: -16s;
+.paper {
+  margin-top: -6px;
+  /* 기계 구멍 위로 올라간 부분만 가린다 (기울어진 옆·아래 모서리는 보이게) */
+  clip-path: inset(0 -60px -80px -60px);
 }
 
-@keyframes drift {
-  to {
-    transform: translate(12vmax, 8vmax) scale(1.15);
+/* 한 번만: 기계에서 끊어 끊어 밀려 나온다 */
+#sample-strip {
+  display: block;
+  height: var(--strip-h);
+  width: var(--strip-w);
+  transform-origin: 50% 0;
+  rotate: -2deg;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+  animation: feed 1.8s steps(1) both, settle 0.5s 1.8s ease-out both;
+}
+
+@keyframes feed {
+  0% {
+    translate: 0 -100%;
+  }
+  20% {
+    translate: 0 -78%;
+  }
+  40% {
+    translate: 0 -55%;
+  }
+  60% {
+    translate: 0 -33%;
+  }
+  80% {
+    translate: 0 -12%;
+  }
+  100% {
+    translate: 0 0;
   }
 }
 
-.sparkles i {
-  position: fixed;
-  left: var(--x);
-  top: var(--y);
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 0 8px 2px rgba(255, 255, 255, 0.7);
-  opacity: 0;
-  animation: twinkle 3.6s ease-in-out var(--d) infinite;
-}
-
-@keyframes twinkle {
-  50% {
-    opacity: 0.9;
+@keyframes settle {
+  from {
+    rotate: 0deg;
+  }
+  to {
+    rotate: -2deg;
   }
 }
 
 .intro {
-  position: relative;
-  min-height: 100%;
-  max-width: 920px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: calc(env(safe-area-inset-top, 0px) + 32px) 16px calc(env(safe-area-inset-bottom, 0px) + 32px);
+  width: min(360px, 100%);
+  text-align: center;
 }
 
-/* 제목 위로 빛이 한 번씩 지나간다 */
-.title {
+.intro h1 {
   margin: 0;
   font-family: var(--display);
-  font-size: clamp(40px, min(12vw, 13vh), 76px);
+  font-size: 40px;
   font-weight: 800;
-  letter-spacing: -0.02em;
-  background: linear-gradient(100deg, #fff 40%, #a8d4ff 50%, #fff 60%) 0 0 / 300% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: shine 5s ease-in-out infinite;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
 }
 
-@keyframes shine {
-  0%,
-  40% {
-    background-position: 100% 0;
-  }
-  100% {
-    background-position: 0 0;
-  }
-}
-
-.tagline {
+.lede {
   margin: 10px 0 0;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 18px;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 16px;
+  line-height: 1.5;
 }
 
-.features {
-  list-style: none;
-  margin: 32px 0 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-}
-
-.features li {
-  width: 164px;
+.controls {
+  margin-top: 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 16px 10px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  -webkit-backdrop-filter: blur(20px);
-  backdrop-filter: blur(20px);
 }
 
-.features .icon {
-  font-size: 26px;
-  line-height: 1.2;
+#start-hint {
+  margin: 12px 0 18px;
+  min-height: 1.4em;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 14px;
 }
 
-.features b {
-  font-size: 15px;
+/* 카메라 안의 셔터와 같은 모양 */
+#start {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 5px solid #fff;
+  background: #fff;
+  box-shadow: inset 0 0 0 4px #000;
+  transition: transform 0.1s;
 }
 
-.features span:last-child {
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 12.5px;
-  line-height: 1.35;
+#start:active {
+  transform: scale(0.92);
 }
 
-.start-hint {
-  margin: 36px 0 12px;
-  color: rgba(255, 255, 255, 0.7);
-  font-size: 15px;
-  font-weight: 600;
-}
-
-#start-buttons {
-  display: flex;
-  gap: 10px;
-  width: min(420px, 100%);
-}
-
-#start-buttons button {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 14px 0;
-  border-radius: 18px;
-  font-size: 17px;
-  font-weight: 700;
-  background: var(--blue);
-  transition: transform 0.1s, background 0.15s;
-}
-
-#start-buttons .icon {
-  font-size: 26px;
-  line-height: 1.2;
-}
-
-#start-buttons button:hover {
-  background: var(--blue-hover);
-}
-
-#start-buttons button:active {
-  transform: scale(0.96);
-}
-
-#start-buttons button:disabled {
-  opacity: 0.5;
+#start:disabled {
+  opacity: 0.4;
   cursor: default;
 }
 
+#start:focus-visible,
+#start-modes button:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}
+
 #error {
-  margin: 16px 0 0;
+  margin: 14px 0 0;
   color: #ff6961;
   font-size: 15px;
+  text-align: center;
 }
 
-/* 키가 작은 화면(아이폰 SE, 가로로 든 폰)에서는 설명을 빼서 시작 버튼까지 한 화면에 */
-@media (max-height: 740px) {
-  .features {
-    margin-top: 20px;
+/* 아이패드·맥처럼 넓은 가로 화면: 왼쪽에 네 컷, 오른쪽에 글씨 */
+@media (min-width: 700px) and (min-aspect-ratio: 1/1) {
+  .booth {
+    flex-direction: row;
+    justify-content: center;
+    align-items: flex-start;
+    gap: clamp(48px, 9vw, 120px);
+    padding-bottom: 0;
   }
 
-  .features li {
-    width: 108px;
-    padding: 10px 6px;
+  .print {
+    --strip-h: min(78vh, 680px);
   }
 
-  .features span:last-child {
-    display: none;
+  .intro {
+    align-self: center;
+    text-align: left;
   }
 
-  .start-hint {
-    margin-top: 20px;
+  .intro h1 {
+    font-size: 56px;
+  }
+
+  .controls {
+    align-items: flex-start;
+  }
+
+  #error {
+    text-align: left;
   }
 }
 
-/* 화면 움직임 줄이기를 켠 기기에서는 멈춰 둔다 */
+/* 아이폰 SE처럼 키가 작은 세로 화면: 셔터까지 한 화면에 */
+@media (max-height: 740px) and (max-aspect-ratio: 1/1) {
+  .print {
+    --strip-h: 44vh;
+  }
+
+  .booth {
+    gap: 20px;
+  }
+
+  .intro h1 {
+    font-size: 34px;
+  }
+
+  .controls {
+    margin-top: 16px;
+  }
+
+  #start-hint {
+    margin: 8px 0 12px;
+  }
+}
+
+/* 가로로 든 폰처럼 키가 작은 화면 */
+@media (max-height: 500px) and (min-aspect-ratio: 1/1) {
+  .booth {
+    flex-direction: row;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 40px;
+    padding-bottom: 0;
+  }
+
+  .print {
+    --strip-h: 92vh;
+  }
+
+  .intro {
+    align-self: center;
+    text-align: left;
+  }
+
+  .intro h1 {
+    font-size: 36px;
+  }
+
+  .controls {
+    align-items: flex-start;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .aurora i,
-  .sparkles i,
-  .title {
+  #sample-strip {
     animation: none;
-  }
-
-  .sparkles i {
-    opacity: 0.6;
   }
 }
 

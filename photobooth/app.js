@@ -11,6 +11,7 @@ import { STICKERS, drawSticker } from "./stickers.js";
 import { BACKGROUNDS, paintBackground, loadPhoto } from "./backgrounds.js";
 import { recordFrames, encodeBoomerang } from "./boomerang.js";
 import { createFaceTracker, createSegmenter } from "./vision.js";
+import { makeSampleStrip } from "./sample-strip.js";
 import { recordContinuously, saveRecording, timestampName } from "../recording.js";
 
 const $ = (id) => document.getElementById(id);
@@ -342,6 +343,13 @@ function snapshot() {
   return shotCanvas;
 }
 
+function flashScreen() {
+  const flash = $("flash");
+  flash.classList.remove("on");
+  void flash.offsetWidth; // 애니메이션을 처음부터 다시
+  flash.classList.add("on");
+}
+
 // 지금 화면을 찍는다. 화면에 보이는 그대로가 사진
 async function capture() {
   renderer.upload();
@@ -349,10 +357,7 @@ async function capture() {
   const shot = snapshot();
   const [blob, bitmap] = await Promise.all([toJpeg(shot), createImageBitmap(shot)]);
   shutterSound();
-  const flash = $("flash");
-  flash.classList.remove("on");
-  void flash.offsetWidth; // 애니메이션을 처음부터 다시
-  flash.classList.add("on");
+  flashScreen();
   return { blob, bitmap };
 }
 
@@ -494,16 +499,29 @@ $("colors").replaceChildren(
 
 // ---------- 시작 ----------
 
-// 입장 화면에서 누른 모드로 카메라를 켠다
-async function start(startMode = mode) {
-  const buttons = [...$("start-buttons").children];
-  const pressed = buttons.find((b) => b.dataset.mode === startMode);
-  const name = pressed.lastElementChild;
-  const original = name.textContent;
-  for (const b of buttons) b.disabled = true;
-  name.textContent = "켜는 중…";
+// ---------- 입장 화면 ----------
+
+const MODE_HINTS = {
+  single: "3, 2, 1 하고 한 장 찍어요",
+  four: "네 장을 이어서 찍고 프레임을 골라요",
+  boomerang: "2초 찍어서 앞뒤로 도는 움짤을 만들어요",
+};
+
+function pickStartMode(m) {
+  mode = m;
+  for (const b of $("start-modes").children) b.classList.toggle("on", b.dataset.mode === m);
+  $("start-hint").textContent = MODE_HINTS[m];
+}
+
+$("sample-strip").src = makeSampleStrip().toDataURL("image/jpeg", 0.9);
+pickStartMode(mode);
+
+// 셔터를 누르면 고른 모드로 카메라를 켠다
+async function start() {
+  const controls = [$("start"), ...$("start-modes").children];
+  for (const c of controls) c.disabled = true;
+  $("start-hint").textContent = "카메라 켜는 중…";
   $("error").textContent = "";
-  mode = startMode;
   try {
     // 아이폰은 버튼을 누른 순간에만 소리를 켤 수 있다
     const Ctx = window.AudioContext || window.webkitAudioContext;
@@ -525,6 +543,7 @@ async function start(startMode = mode) {
 
     renderer ??= createRenderer(canvas, video, EFFECTS);
     $("start-screen").classList.add("hidden");
+    flashScreen();
     showCameraUI(true);
     setMode(mode);
     requestAnimationFrame(frame);
@@ -537,12 +556,13 @@ async function start(startMode = mode) {
     console.error(err);
     $("error").textContent =
       err.name === "NotAllowedError" ? "⚠️ 카메라 권한을 허용해 주세요" : `⚠️ ${err.message}`;
-    for (const b of buttons) b.disabled = false;
-    name.textContent = original;
+    for (const c of controls) c.disabled = false;
+    $("start-hint").textContent = MODE_HINTS[mode];
   }
 }
 
-for (const b of $("start-buttons").children) b.addEventListener("click", () => start(b.dataset.mode));
+$("start").addEventListener("click", start);
+for (const b of $("start-modes").children) b.addEventListener("click", () => pickStartMode(b.dataset.mode));
 $("shutter").addEventListener("click", shoot);
 $("effects").addEventListener("click", () => openGrid(Math.floor(EFFECTS.findIndex((fx) => fx.id === current) / PAGE_SIZE)));
 $("prev").addEventListener("click", () => openGrid(gridPage - 1));

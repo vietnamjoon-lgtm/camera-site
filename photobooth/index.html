@@ -21,40 +21,32 @@
   <div id="countdown" class="hidden"></div>
   <div id="flash"></div>
 
-  <!-- 입장 화면: 기능 소개 + 모드를 골라서 바로 시작 -->
+  <!-- 입장 화면: 부스 슬롯에서 나오는 견본 네 컷 + 카메라 안과 같은 모드 전환·셔터 -->
   <div id="start-screen">
-    <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
-    <div class="sparkles" aria-hidden="true">
-      <i style="--x: 12%; --y: 18%; --d: 0s"></i>
-      <i style="--x: 84%; --y: 12%; --d: 1.2s"></i>
-      <i style="--x: 70%; --y: 34%; --d: 2.4s"></i>
-      <i style="--x: 22%; --y: 62%; --d: 0.6s"></i>
-      <i style="--x: 90%; --y: 70%; --d: 1.8s"></i>
-      <i style="--x: 8%; --y: 88%; --d: 3s"></i>
-      <i style="--x: 52%; --y: 8%; --d: 2s"></i>
-      <i style="--x: 60%; --y: 92%; --d: 0.9s"></i>
-    </div>
+    <div class="booth">
+      <figure class="print">
+        <div class="slot" aria-hidden="true"></div>
+        <div class="paper">
+          <img id="sample-strip" alt="견본 네 컷: 바다에 하트 볼, 노을에 고양이 귀, 분홍 배경에 토끼 귀, 무지개에 왕관" />
+        </div>
+      </figure>
 
-    <main class="intro">
-      <h1 class="title">찰칵 부스</h1>
-      <p class="tagline">효과·스티커·배경을 골라서 찍어요</p>
+      <div class="intro">
+        <h1>찰칵 부스</h1>
+        <p class="lede">효과, 얼굴 스티커, 배경을 골라서 찍으면 구글 드라이브에 바로 저장돼요.</p>
 
-      <ul class="features">
-        <li><span class="icon">✨</span><b>효과 18가지</b><span>볼록 렌즈, 소용돌이, 만화…</span></li>
-        <li><span class="icon">🎞</span><b>네 컷</b><span>네 장 찍고 프레임 골라 합치기</span></li>
-        <li><span class="icon">🔁</span><b>움짤</b><span>2초 찍어서 부메랑 GIF</span></li>
-        <li><span class="icon">😺</span><b>얼굴 스티커</b><span>귀·선글라스·왕관이 따라다녀요</span></li>
-        <li><span class="icon">🌄</span><b>배경 바꾸기</b><span>우주, 바다, 내 사진까지</span></li>
-      </ul>
-
-      <p class="start-hint">어떻게 찍을까요?</p>
-      <div id="start-buttons" role="group" aria-label="찍는 방식 골라서 시작">
-        <button type="button" data-mode="single"><span class="icon">📷</span><span>한 장</span></button>
-        <button type="button" data-mode="four"><span class="icon">🎞</span><span>네 컷</span></button>
-        <button type="button" data-mode="boomerang"><span class="icon">🔁</span><span>움짤</span></button>
+        <div class="controls">
+          <div id="start-modes" class="segmented" role="group" aria-label="찍는 방식">
+            <button type="button" data-mode="single" class="on">한 장</button>
+            <button type="button" data-mode="four">네 컷</button>
+            <button type="button" data-mode="boomerang">움짤</button>
+          </div>
+          <p id="start-hint"></p>
+          <button id="start" type="button" aria-label="카메라 켜고 시작"></button>
+          <p id="error"></p>
+        </div>
       </div>
-      <p id="error"></p>
-    </main>
+    </div>
   </div>
 
   <div id="mode" class="hidden" role="group" aria-label="찍는 방식">
