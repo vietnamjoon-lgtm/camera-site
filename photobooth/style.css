@@ -193,6 +193,113 @@ button {
   font-size: 30px;
 }
 
+/* ----- 한 장 / 네 컷 전환 (셔터 바로 위) ----- */
+
+#mode,
+.segmented {
+  display: flex;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(30, 30, 32, 0.72);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+}
+
+#mode {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 124px);
+  transform: translateX(-50%);
+}
+
+#mode button,
+.segmented button {
+  padding: 7px 16px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.75);
+  white-space: nowrap;
+}
+
+#mode button.on,
+.segmented button.on {
+  color: #1d1d1f;
+  background: #fff;
+}
+
+#mode button:disabled {
+  opacity: 0.5;
+}
+
+/* ----- 네 컷 결과 화면 ----- */
+
+#result {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: calc(env(safe-area-inset-top, 0px) + 16px) 16px calc(env(safe-area-inset-bottom, 0px) + 20px);
+  background: rgba(0, 0, 0, 0.92);
+}
+
+#result-img {
+  flex: 1;
+  min-height: 0;
+  max-width: 100%;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+}
+
+#result-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+#colors {
+  display: flex;
+  gap: 12px;
+}
+
+#colors button {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+}
+
+#colors button.on {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+}
+
+#result-actions {
+  display: flex;
+  gap: 12px;
+}
+
+#result-actions button {
+  min-width: 120px;
+  padding: 12px 24px;
+  border-radius: 999px;
+  font-size: 16px;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+#result-actions #save {
+  background: var(--blue);
+}
+
+#result-actions button:disabled {
+  opacity: 0.5;
+}
+
 /* ----- 효과 격자 (칸 위치는 app.js가 WebGL 그림과 똑같이 맞춘다) ----- */
 
 #grid {

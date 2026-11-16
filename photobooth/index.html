@@ -26,6 +26,11 @@
     <p id="error"></p>
   </div>
 
+  <div id="mode" class="hidden" role="group" aria-label="찍는 방식">
+    <button type="button" data-mode="single" class="on">한 장</button>
+    <button type="button" data-mode="four">네 컷</button>
+  </div>
+
   <footer id="bar" class="hidden">
     <button id="effects" class="side" type="button" aria-label="효과 고르기">
       <span class="icon">▦</span><span>효과</span>
@@ -42,6 +47,19 @@
     <span id="page"></span>
     <button id="next" class="side" type="button" aria-label="다음 효과">›</button>
   </footer>
+
+  <!-- 네 컷을 다 찍으면 뜨는 결과 화면 -->
+  <div id="result" class="hidden">
+    <img id="result-img" alt="네 컷 미리보기" />
+    <div id="result-controls">
+      <div id="layouts" class="segmented" role="group" aria-label="모양"></div>
+      <div id="colors" role="group" aria-label="프레임 색"></div>
+      <div id="result-actions">
+        <button id="retake" type="button">다시 찍기</button>
+        <button id="save" type="button">저장</button>
+      </div>
+    </div>
+  </div>
 
   <script type="module" src="app.js"></script>
 </body>
