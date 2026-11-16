@@ -35,7 +35,8 @@ button {
   pointer-events: none;
 }
 
-#view {
+#view,
+#overlay {
   position: fixed;
   inset: 0;
   width: 100%;
@@ -232,6 +233,66 @@ button {
   opacity: 0.5;
 }
 
+/* ----- 스티커 · 배경 (오른쪽 위 버튼, 셔터 위 고르는 줄) ----- */
+
+#overlay {
+  pointer-events: none;
+}
+
+#tools {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 16px);
+  right: max(16px, env(safe-area-inset-right, 0px));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+#tools .side.on {
+  outline: 3px solid var(--blue);
+  outline-offset: 2px;
+}
+
+#tools .side:disabled {
+  opacity: 0.4;
+}
+
+#picker {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 172px);
+  transform: translateX(-50%);
+  max-width: calc(100% - 32px);
+  display: flex;
+  gap: 6px;
+  padding: 5px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-radius: 999px;
+  background: rgba(30, 30, 32, 0.72);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+}
+
+#picker::-webkit-scrollbar {
+  display: none;
+}
+
+#picker button {
+  flex: none;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+#picker button.on {
+  color: #1d1d1f;
+  background: #fff;
+}
+
 /* ----- 네 컷 결과 화면 ----- */
 
 #result {
@@ -276,6 +337,25 @@ button {
 #colors button.on {
   outline: 3px solid var(--blue);
   outline-offset: 2px;
+}
+
+/* 아이폰은 16px보다 작으면 누를 때 화면이 확대된다 */
+#caption {
+  width: min(320px, 100%);
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 16px;
+  text-align: center;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.16);
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+#caption::placeholder {
+  color: rgba(255, 255, 255, 0.5);
 }
 
 #result-actions {

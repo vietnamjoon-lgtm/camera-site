@@ -34,8 +34,8 @@ function dateText(d) {
   return `${d.getFullYear()}.${p(d.getMonth() + 1)}.${p(d.getDate())}`;
 }
 
-// images: 네 장 (ImageBitmap 등 drawImage에 넣을 수 있는 것)
-export function composeFourCut(images, layoutId, colorId, date = new Date()) {
+// images: 네 장 (ImageBitmap 등 drawImage에 넣을 수 있는 것), caption: 날짜 아래 글씨 (비우면 없음)
+export function composeFourCut(images, layoutId, colorId, caption = "찰칵 부스", date = new Date()) {
   const L = LAYOUTS.find((l) => l.id === layoutId);
   const C = FRAME_COLORS.find((c) => c.id === colorId);
   const canvas = document.createElement("canvas");
@@ -58,9 +58,9 @@ export function composeFourCut(images, layoutId, colorId, date = new Date()) {
   ctx.textBaseline = "middle";
   ctx.font = `700 46px ${FONT}`;
   ctx.fillText(dateText(date), canvas.width / 2, footerTop + FOOTER * 0.42);
-  ctx.globalAlpha = 0.7;
-  ctx.font = `600 24px ${FONT}`;
-  ctx.fillText("찰칵 부스", canvas.width / 2, footerTop + FOOTER * 0.74);
+  ctx.globalAlpha = 0.75;
+  ctx.font = `600 28px ${FONT}`;
+  ctx.fillText(caption.trim(), canvas.width / 2, footerTop + FOOTER * 0.74, canvas.width - PAD * 2);
   ctx.globalAlpha = 1;
 
   return canvas;

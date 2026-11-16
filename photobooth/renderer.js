@@ -1,5 +1,6 @@
 // WebGL로 카메라 화면에 효과를 씌워 그린다. 효과마다 셰이더 프로그램 하나 (effects.js).
 // 한 캔버스 안에서 viewport를 나눠 그려서 격자 미리보기도 같은 코드로 그린다.
+// 배경 바꾸기를 켜면 cam()이 사람 마스크로 카메라와 배경을 섞어 주므로, 효과는 섞인 화면에 씌워진다.
 
 const VERTEX = `
 attribute vec2 aPos;
@@ -14,14 +15,31 @@ const HEADER = `
 precision highp float;
 varying vec2 vUv;
 uniform sampler2D uTex;
+uniform sampler2D uMask;
+uniform sampler2D uBg;
+uniform float uBgMode; // 0 그대로, 1 배경 흐림, 2 배경 그림
+uniform vec2 uBgCover;
 uniform vec2 uRes;
 uniform vec2 uCover;
 uniform float uTime;
 
+vec3 blurCam(vec2 t) {
+  vec3 s = vec3(0.0);
+  for (int i = 0; i < 12; i++) {
+    vec2 o = vec2(cos(float(i) * 0.5236), sin(float(i) * 0.5236));
+    s += texture2D(uTex, t + o * 0.02).rgb + texture2D(uTex, t + o * 0.045).rgb;
+  }
+  return s / 24.0;
+}
+
 vec4 cam(vec2 uv) {
   vec2 t = (vec2(1.0 - uv.x, uv.y) - 0.5) * uCover + 0.5;
   if (t.x < 0.0 || t.x > 1.0 || t.y < 0.0 || t.y > 1.0) return vec4(0.0, 0.0, 0.0, 1.0);
-  return texture2D(uTex, t);
+  vec4 c = texture2D(uTex, t);
+  if (uBgMode < 0.5) return c;
+  float person = smoothstep(0.35, 0.65, texture2D(uMask, t).r);
+  vec3 bg = uBgMode < 1.5 ? blurCam(t) : texture2D(uBg, (uv - 0.5) * uBgCover + 0.5).rgb;
+  return vec4(mix(bg, c.rgb, person), 1.0);
 }
 
 vec2 qScale() { return uRes / min(uRes.x, uRes.y); }
@@ -65,11 +83,18 @@ export function createRenderer(canvas, video, effects) {
     gl.bindAttribLocation(p, 0, "aPos");
     gl.linkProgram(p);
     if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(`${fx.id}: ${gl.getProgramInfoLog(p)}`);
+    const u = (name) => gl.getUniformLocation(p, name);
+    gl.useProgram(p);
+    gl.uniform1i(u("uTex"), 0);
+    gl.uniform1i(u("uMask"), 1);
+    gl.uniform1i(u("uBg"), 2);
     programs.set(fx.id, {
       p,
-      uRes: gl.getUniformLocation(p, "uRes"),
-      uCover: gl.getUniformLocation(p, "uCover"),
-      uTime: gl.getUniformLocation(p, "uTime"),
+      uRes: u("uRes"),
+      uCover: u("uCover"),
+      uTime: u("uTime"),
+      uBgMode: u("uBgMode"),
+      uBgCover: u("uBgCover"),
     });
   }
 
@@ -79,16 +104,27 @@ export function createRenderer(canvas, video, effects) {
   gl.enableVertexAttribArray(0);
   gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
 
-  const tex = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, tex);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  // 텍스처 칸 0: 카메라, 1: 사람 마스크, 2: 배경 그림. 처음엔 까만 1×1로 채워 둔다
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+  for (let unit = 0; unit < 3; unit++) {
+    gl.activeTexture(gl.TEXTURE0 + unit);
+    gl.bindTexture(gl.TEXTURE_2D, gl.createTexture());
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array([0, 0, 0, 255]));
+  }
   gl.enable(gl.SCISSOR_TEST);
 
+  const uploadTo = (unit, format, source) => {
+    gl.activeTexture(gl.TEXTURE0 + unit);
+    gl.texImage2D(gl.TEXTURE_2D, 0, format, format, gl.UNSIGNED_BYTE, source);
+  };
+
   const start = performance.now();
+  let bgMode = 0;
+  let bgAspect = 1;
 
   return {
     gl,
@@ -108,9 +144,22 @@ export function createRenderer(canvas, video, effects) {
     // 카메라의 지금 프레임을 텍스처로 올린다. 프레임마다 한 번.
     upload() {
       if (video.readyState < 2) return false;
-      gl.bindTexture(gl.TEXTURE_2D, tex);
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, video);
+      uploadTo(0, gl.RGB, video);
       return true;
+    },
+
+    // 사람 마스크 (vision.js가 만든 그림, 카메라 원본과 같은 방향)
+    setMask(source) {
+      uploadTo(1, gl.RGBA, source);
+    },
+
+    // mode: "off" | "blur" | "image" (image는 그 그림을 배경으로)
+    setBackground(mode, image) {
+      bgMode = { off: 0, blur: 1, image: 2 }[mode];
+      if (mode === "image") {
+        uploadTo(2, gl.RGB, image);
+        bgAspect = image.width / image.height;
+      }
     },
 
     clear() {
@@ -131,6 +180,8 @@ export function createRenderer(canvas, video, effects) {
       // 화면을 꽉 채우도록 카메라 화면의 남는 쪽을 잘라낸다
       gl.uniform2f(prog.uCover, ca > va ? 1 : ca / va, ca > va ? va / ca : 1);
       gl.uniform1f(prog.uTime, (performance.now() - start) / 1000);
+      gl.uniform1f(prog.uBgMode, bgMode);
+      gl.uniform2f(prog.uBgCover, ca > bgAspect ? 1 : ca / bgAspect, ca > bgAspect ? bgAspect / ca : 1);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     },
   };

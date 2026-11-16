@@ -13,6 +13,8 @@
 <body>
   <video id="video" autoplay playsinline muted></video>
   <canvas id="view"></canvas>
+  <!-- 얼굴 스티커는 효과 화면 위에 겹친 이 캔버스에 그린다 -->
+  <canvas id="overlay"></canvas>
 
   <div id="grid" class="hidden"></div>
   <div id="label" class="hidden"></div>
@@ -29,7 +31,20 @@
   <div id="mode" class="hidden" role="group" aria-label="찍는 방식">
     <button type="button" data-mode="single" class="on">한 장</button>
     <button type="button" data-mode="four">네 컷</button>
+    <button type="button" data-mode="boomerang">움짤</button>
   </div>
+
+  <div id="tools" class="hidden">
+    <button id="sticker-btn" class="side" type="button" aria-label="얼굴 스티커 고르기">
+      <span class="icon">😺</span><span>스티커</span>
+    </button>
+    <button id="bg-btn" class="side" type="button" aria-label="배경 고르기">
+      <span class="icon">🌄</span><span>배경</span>
+    </button>
+  </div>
+  <!-- 스티커·배경 고르는 줄 (셔터 위) -->
+  <div id="picker" class="hidden" role="group"></div>
+  <input id="photo" type="file" accept="image/*" hidden />
 
   <footer id="bar" class="hidden">
     <button id="effects" class="side" type="button" aria-label="효과 고르기">
@@ -54,6 +69,7 @@
     <div id="result-controls">
       <div id="layouts" class="segmented" role="group" aria-label="모양"></div>
       <div id="colors" role="group" aria-label="프레임 색"></div>
+      <input id="caption" type="text" maxlength="20" placeholder="아래에 넣을 글씨 (비우면 없음)" aria-label="아래에 넣을 글씨" />
       <div id="result-actions">
         <button id="retake" type="button">다시 찍기</button>
         <button id="save" type="button">저장</button>
