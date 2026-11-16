@@ -1,0 +1,266 @@
+/* 색·글꼴은 ../apple.css의 공통 변수를 쓴다 */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  color: #fff;
+  font-family: var(--font);
+  -webkit-font-smoothing: antialiased;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+/* 카메라 원본은 숨기고 WebGL 캔버스에 효과를 씌워 그린다 */
+#video {
+  position: fixed;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#view {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ----- 시작 화면 ----- */
+
+#start-screen {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  text-align: center;
+  background: #000;
+}
+
+#start-screen h1 {
+  margin: 0 0 8px;
+  font-family: var(--display);
+  font-size: 40px;
+  font-weight: 700;
+}
+
+#start-screen p {
+  margin: 0;
+  color: var(--faint);
+  font-size: 17px;
+}
+
+#start {
+  margin-top: 28px;
+  border-radius: 999px;
+  padding: 14px 40px;
+  font-size: 19px;
+  font-weight: 600;
+  background: var(--blue);
+}
+
+#start:hover {
+  background: var(--blue-hover);
+}
+
+#start:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+#error {
+  margin-top: 16px !important;
+  color: var(--red) !important;
+}
+
+/* ----- 아래 막대 (효과 · 셔터 · 방금 찍은 사진) ----- */
+
+#bar,
+#grid-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px max(24px, env(safe-area-inset-left, 0px)) calc(env(safe-area-inset-bottom, 0px) + 20px);
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.55));
+}
+
+/* 넓은 화면에서도 버튼은 가운데 560px 안에 모은다 (어두운 띠는 화면 끝까지) */
+#bar {
+  padding-left: max(24px, calc((100% - 560px) / 2));
+  padding-right: max(24px, calc((100% - 560px) / 2));
+}
+
+.side {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(30, 30, 32, 0.72);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+}
+
+.side .icon {
+  font-size: 22px;
+  line-height: 1;
+}
+
+#shutter {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  border: 5px solid #fff;
+  background: rgba(255, 255, 255, 0.25);
+  transition: transform 0.1s;
+}
+
+#shutter:active {
+  transform: scale(0.92);
+}
+
+#shutter:disabled {
+  opacity: 0.4;
+}
+
+#thumb {
+  position: relative;
+  padding: 0;
+  overflow: visible;
+}
+
+#thumb:not(.has-photo) {
+  visibility: hidden;
+}
+
+#thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 16px;
+  border: 2px solid #fff;
+}
+
+#thumb-badge {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  font-size: 18px;
+}
+
+#grid-bar {
+  justify-content: center;
+  gap: 28px;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+#grid-bar .side {
+  font-size: 30px;
+}
+
+/* ----- 효과 격자 (칸 위치는 app.js가 WebGL 그림과 똑같이 맞춘다) ----- */
+
+#grid {
+  position: fixed;
+  inset: 0;
+}
+
+#grid button {
+  position: absolute;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+}
+
+#grid button.current {
+  outline: 3px solid var(--blue);
+  outline-offset: -3px;
+}
+
+/* ----- 효과 이름 · 카운트다운 · 번쩍임 ----- */
+
+#label {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 16px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 600;
+  background: rgba(30, 30, 32, 0.72);
+  white-space: nowrap;
+}
+
+#countdown {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--display);
+  font-size: min(40vw, 240px);
+  font-weight: 700;
+  text-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+
+#flash {
+  position: fixed;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#flash.on {
+  animation: flash 0.5s ease-out;
+}
+
+@keyframes flash {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
