@@ -516,6 +516,48 @@ function pickStartMode(m) {
 $("sample-strip").src = makeSampleStrip().toDataURL("image/jpeg", 0.9);
 pickStartMode(mode);
 
+// 견본 네 컷은 기계에 매달린 종이처럼 마우스(손가락)를 따라 흔들린다.
+// 좌우로는 용수철처럼 출렁이고, 커서 쪽으로 살짝 입체로 기운다. 빠르게 휘두르면 더 크게 흔들린다
+const clamp = (v, max) => Math.max(-max, Math.min(max, v));
+
+function swingStrip() {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const screen = $("start-screen");
+  const strip = $("sample-strip");
+  let target = 0; // 가야 할 기울기 (deg)
+  let angle = 0;
+  let speed = 0;
+  let tilt = { x: 0, y: 0 }; // 가야 할 입체 기울기
+  const now = { x: 0, y: 0 };
+  let lastX = null;
+
+  screen.addEventListener("pointermove", (e) => {
+    const r = strip.getBoundingClientRect();
+    const dx = clamp((e.clientX - (r.left + r.width / 2)) / (innerWidth / 2), 1);
+    const dy = clamp((e.clientY - (r.top + r.height / 2)) / (innerHeight / 2), 1);
+    target = -dx * 8; // 위가 매달려 있으니 반대로 돌려야 아래쪽이 커서를 따라간다
+    tilt = { x: -dy * 10, y: dx * 14 };
+    if (lastX !== null) speed = clamp(speed - (e.clientX - lastX) * 0.008, 1.2);
+    lastX = e.clientX;
+  });
+  screen.addEventListener("pointerleave", () => {
+    target = 0;
+    tilt = { x: 0, y: 0 };
+    lastX = null;
+  });
+
+  (function step() {
+    if (screen.classList.contains("hidden")) return; // 카메라가 켜지면 멈춘다
+    speed = (speed + (target - angle) * 0.04) * 0.9;
+    angle = clamp(angle + speed, 16);
+    now.x += (tilt.x - now.x) * 0.08;
+    now.y += (tilt.y - now.y) * 0.08;
+    strip.style.transform = `perspective(900px) rotateX(${now.x}deg) rotateY(${now.y}deg) rotate(${angle}deg)`;
+    requestAnimationFrame(step);
+  })();
+}
+swingStrip();
+
 // 셔터를 누르면 고른 모드로 카메라를 켠다
 async function start() {
   const controls = [$("start"), ...$("start-modes").children];
