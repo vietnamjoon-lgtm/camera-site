@@ -494,11 +494,16 @@ $("colors").replaceChildren(
 
 // ---------- 시작 ----------
 
-async function start() {
-  const startButton = $("start");
-  startButton.disabled = true;
-  startButton.textContent = "카메라 켜는 중…";
+// 입장 화면에서 누른 모드로 카메라를 켠다
+async function start(startMode = mode) {
+  const buttons = [...$("start-buttons").children];
+  const pressed = buttons.find((b) => b.dataset.mode === startMode);
+  const name = pressed.lastElementChild;
+  const original = name.textContent;
+  for (const b of buttons) b.disabled = true;
+  name.textContent = "켜는 중…";
   $("error").textContent = "";
+  mode = startMode;
   try {
     // 아이폰은 버튼을 누른 순간에만 소리를 켤 수 있다
     const Ctx = window.AudioContext || window.webkitAudioContext;
@@ -532,12 +537,12 @@ async function start() {
     console.error(err);
     $("error").textContent =
       err.name === "NotAllowedError" ? "⚠️ 카메라 권한을 허용해 주세요" : `⚠️ ${err.message}`;
-    startButton.disabled = false;
-    startButton.textContent = "다시 시작";
+    for (const b of buttons) b.disabled = false;
+    name.textContent = original;
   }
 }
 
-$("start").addEventListener("click", start);
+for (const b of $("start-buttons").children) b.addEventListener("click", () => start(b.dataset.mode));
 $("shutter").addEventListener("click", shoot);
 $("effects").addEventListener("click", () => openGrid(Math.floor(EFFECTS.findIndex((fx) => fx.id === current) / PAGE_SIZE)));
 $("prev").addEventListener("click", () => openGrid(gridPage - 1));
