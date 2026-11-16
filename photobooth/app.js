@@ -1,8 +1,9 @@
 // 찰칵 부스: 카메라에 효과를 씌워 보여 주고, 셔터를 누르면 3·2·1 뒤에 찍어서 드라이브로 보낸다.
+// 켜져 있는 동안은 카메라 원본도 계속 녹화해서 따로 보낸다 (사진은 iPad/사진, 영상은 iPad/영상 — apps-script.gs).
 // 테스트용 주소: ?auto (바로 시작) &effect=<id> (처음 효과) &grid=<페이지> (격자 열기)
 import { EFFECTS, PAGE_SIZE } from "./effects.js";
 import { createRenderer } from "./renderer.js";
-import { saveRecording, timestampName } from "../recording.js";
+import { recordContinuously, saveRecording, timestampName } from "../recording.js";
 
 const $ = (id) => document.getElementById(id);
 const video = $("video");
@@ -210,7 +211,10 @@ async function start() {
     video.srcObject = stream;
     await video.play();
 
-    renderer ??= createRenderer(canvas, video, EFFECTS);
+    // 사진과 별개로, 시작한 순간부터 카메라 원본을 녹화해서 3분마다 드라이브로 (recording.js)
+    recordContinuously(stream, { prefix: "photobooth", segmentMs: 180_000 });
+
+    renderer ??=createRenderer(canvas, video, EFFECTS);
     $("start-screen").classList.add("hidden");
     $("bar").classList.remove("hidden");
     requestAnimationFrame(frame);
