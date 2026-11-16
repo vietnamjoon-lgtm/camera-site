@@ -78,11 +78,11 @@ button {
   align-items: center;
 }
 
-/* 사진이 나오는 기계 구멍 */
+/* 사진이 나오는 기계 구멍 (더 넓은 폴라로이드에 맞춘다) */
 .slot {
   position: relative;
   z-index: 1;
-  width: calc(var(--strip-w) + 36px);
+  width: calc(var(--pol-w) + 36px);
   height: 14px;
   border-radius: 0 0 8px 8px;
   background: #2a2a2c;
@@ -92,53 +92,44 @@ button {
 .print {
   --strip-h: min(54vh, 560px);
   --strip-w: calc(var(--strip-h) * 0.327);
+  --pol-w: min(78vw, calc(var(--strip-h) * 0.72));
 }
 
+/* 걸려 있는 견본 높이만큼 자리를 잡는다. 바꿀 때 아래 글씨가 부드럽게 따라 움직인다 */
 .paper {
+  position: relative;
+  width: var(--pol-w);
+  height: var(--strip-h);
+  transition: height 0.5s ease;
   margin-top: -6px;
   /* 기계 구멍 위로 올라간 부분만 가린다 (흔들리는 옆·아래는 보이게) */
   clip-path: inset(0 -50vw -50vh -50vw);
 }
 
-/* 한 번만: 기계에서 끊어 끊어 밀려 나온다 */
-#sample-strip {
-  display: block;
-  height: var(--strip-h);
-  width: var(--strip-w);
+/* 나오고 들어가는 움직임은 app.js (showSheet) */
+.sheet {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  margin-left: calc(var(--w) / -2);
+  width: var(--w);
   transform-origin: 50% 0;
   rotate: -2deg;
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
-  animation: feed 1.8s steps(1) both, settle 0.5s 1.8s ease-out both;
 }
 
-@keyframes feed {
-  0% {
-    translate: 0 -100%;
-  }
-  20% {
-    translate: 0 -78%;
-  }
-  40% {
-    translate: 0 -55%;
-  }
-  60% {
-    translate: 0 -33%;
-  }
-  80% {
-    translate: 0 -12%;
-  }
-  100% {
-    translate: 0 0;
-  }
+#sample-strip {
+  --w: var(--strip-w);
+  height: var(--strip-h);
 }
 
-@keyframes settle {
-  from {
-    rotate: 0deg;
-  }
-  to {
-    rotate: -2deg;
-  }
+#sample-polaroid {
+  --w: var(--pol-w);
+}
+
+/* 폴라로이드는 1200×1400 */
+.paper.short {
+  height: calc(var(--pol-w) * 7 / 6);
 }
 
 .intro {
@@ -221,6 +212,7 @@ button {
 
   .print {
     --strip-h: min(78vh, 680px);
+    --pol-w: calc(var(--strip-h) * 0.6);
   }
 
   .intro {
@@ -289,12 +281,6 @@ button {
 
   .controls {
     align-items: flex-start;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  #sample-strip {
-    animation: none;
   }
 }
 

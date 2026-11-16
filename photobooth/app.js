@@ -13,7 +13,7 @@ import { STICKERS, drawSticker } from "./stickers.js";
 import { BACKGROUNDS, paintBackground, loadPhoto } from "./backgrounds.js";
 import { recordFrames, encodeBoomerang } from "./boomerang.js";
 import { createFaceTracker, createSegmenter } from "./vision.js";
-import { makeSampleStrip } from "./sample-strip.js";
+import { makeSampleStrip, makeSamplePolaroid } from "./sample-strip.js";
 import { recordContinuously, saveRecording, timestampName } from "../recording.js";
 
 const $ = (id) => document.getElementById(id);
@@ -525,20 +525,49 @@ function pickStartMode(m) {
   mode = m;
   for (const b of $("start-modes").children) b.classList.toggle("on", b.dataset.mode === m);
   $("start-hint").textContent = MODE_HINTS[m];
+  showSheet(m === "single" ? $("sample-polaroid") : $("sample-strip"));
+}
+
+// 견본 사진은 기계 구멍에서 끊어 끊어 밀려 나오고, 모드를 바꾸면 쏙 들어간 뒤 다른 게 나온다
+const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const FEED = [0, 0.22, 0.45, 0.67, 0.88, 1].map((k, i, all) => ({
+  translate: `0 ${-100 + k * 100}%`,
+  offset: i / (all.length - 1),
+  easing: "steps(1, end)",
+}));
+let sheet = null; // 지금 걸려 있는 견본
+let sheetTurn = 0; // 빠르게 여러 번 바꿔도 마지막 것만 나오게
+
+async function showSheet(next) {
+  if (next === sheet) return;
+  const turn = ++sheetTurn;
+  const prev = sheet;
+  sheet = next;
+  if (prev && !calm) {
+    await prev.animate([{ translate: "0 0" }, { translate: "0 -100%" }], { duration: 380, easing: "ease-in", fill: "forwards" }).finished.catch(() => {});
+    if (turn !== sheetTurn) return;
+  }
+  prev?.classList.add("hidden");
+  prev?.getAnimations().forEach((a) => a.cancel());
+  next.getAnimations().forEach((a) => a.cancel()); // 바꾸다 만 들어가기 움직임이 남아 있으면 지운다
+  next.parentElement.classList.toggle("short", next.id === "sample-polaroid");
+  next.classList.remove("hidden");
+  if (!calm) next.animate(FEED, { duration: 1500, fill: "backwards" });
 }
 
 $("sample-strip").src = makeSampleStrip().toDataURL("image/jpeg", 0.9);
+$("sample-polaroid").src = makeSamplePolaroid().toDataURL("image/jpeg", 0.9);
 pickStartMode(mode);
 
-// 견본 네 컷은 기계에 매달린 종이. 커서(손가락)가 근처를 스치면 그 방향으로 바람을 맞은 것처럼
+// 견본은 기계에 매달린 종이. 커서(손가락)가 근처를 스치면 그 방향으로 바람을 맞은 것처럼
 // 살랑 흔들리다가 천천히 제자리로 돌아온다. 가까이서 빠르게 지나갈수록 세게, 멀면 그대로
 const clamp = (v, max) => Math.max(-max, Math.min(max, v));
 const REACH = 280; // 이 거리(px) 안을 지나가야 바람이 닿는다
 
 function swingStrip() {
-  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  if (calm) return;
   const screen = $("start-screen");
-  const strip = $("sample-strip");
+  const sheets = [$("sample-strip"), $("sample-polaroid")];
   let angle = 0; // 좌우로 흔들림 (deg)
   let speed = 0;
   let flutter = 0; // 종이가 살짝 비틀리는 것 (deg)
@@ -547,7 +576,7 @@ function swingStrip() {
 
   screen.addEventListener("pointermove", (e) => {
     if (last) {
-      const r = strip.getBoundingClientRect();
+      const r = sheet.getBoundingClientRect();
       const gapX = Math.max(r.left - e.clientX, 0, e.clientX - r.right);
       const gapY = Math.max(r.top - e.clientY, 0, e.clientY - r.bottom);
       const near = Math.max(0, 1 - Math.hypot(gapX, gapY) / REACH);
@@ -566,7 +595,7 @@ function swingStrip() {
     angle = clamp(angle + speed, 9);
     flutterSpeed = (flutterSpeed - flutter * 0.05) * 0.92;
     flutter = clamp(flutter + flutterSpeed, 20);
-    strip.style.transform = `perspective(900px) rotateY(${flutter}deg) rotate(${angle}deg)`;
+    for (const s of sheets) s.style.transform = `perspective(900px) rotateY(${flutter}deg) rotate(${angle}deg)`;
     requestAnimationFrame(step);
   })();
 }

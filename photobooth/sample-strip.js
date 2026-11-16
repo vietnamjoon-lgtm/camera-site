@@ -1,8 +1,9 @@
-// 입장 화면에 걸어 두는 견본 네 컷. 이 앱이 실제로 만드는 것(배경 + 스티커 + 네 컷 합치기)으로 그린다.
+// 입장 화면에 걸어 두는 견본 네 컷·폴라로이드. 이 앱이 실제로 만드는 것(배경 + 스티커 + 네 컷·폴라로이드)으로 그린다.
 // 사람 대신 까만 실루엣을 세우고, 스티커는 실루엣 얼굴 위치에 맞춘 가짜 얼굴 점으로 붙인다.
 import { paintBackground } from "./backgrounds.js";
 import { drawSticker } from "./stickers.js";
 import { composeFourCut } from "./fourcut.js";
+import { composeSingle } from "./single.js";
 
 const W = 600;
 const H = 450;
@@ -59,4 +60,8 @@ function frame({ bg, sticker, tilt }) {
 
 export function makeSampleStrip() {
   return composeFourCut(FRAMES.map(frame), "strip", "white", "찰칵 부스");
+}
+
+export function makeSamplePolaroid() {
+  return composeSingle(frame({ bg: "pink", sticker: "dog", tilt: 0.06 }), "polaroid", "white", "찰칵 부스");
 }
