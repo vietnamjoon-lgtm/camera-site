@@ -516,43 +516,43 @@ function pickStartMode(m) {
 $("sample-strip").src = makeSampleStrip().toDataURL("image/jpeg", 0.9);
 pickStartMode(mode);
 
-// 견본 네 컷은 기계에 매달린 종이처럼 마우스(손가락)를 따라 흔들린다.
-// 좌우로는 용수철처럼 출렁이고, 커서 쪽으로 살짝 입체로 기운다. 빠르게 휘두르면 더 크게 흔들린다
+// 견본 네 컷은 기계에 매달린 종이. 커서(손가락)가 근처를 스치면 그 방향으로 바람을 맞은 것처럼
+// 살랑 흔들리다가 천천히 제자리로 돌아온다. 가까이서 빠르게 지나갈수록 세게, 멀면 그대로
 const clamp = (v, max) => Math.max(-max, Math.min(max, v));
+const REACH = 280; // 이 거리(px) 안을 지나가야 바람이 닿는다
 
 function swingStrip() {
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   const screen = $("start-screen");
   const strip = $("sample-strip");
-  let target = 0; // 가야 할 기울기 (deg)
-  let angle = 0;
+  let angle = 0; // 좌우로 흔들림 (deg)
   let speed = 0;
-  let tilt = { x: 0, y: 0 }; // 가야 할 입체 기울기
-  const now = { x: 0, y: 0 };
-  let lastX = null;
+  let flutter = 0; // 종이가 살짝 비틀리는 것 (deg)
+  let flutterSpeed = 0;
+  let last = null;
 
   screen.addEventListener("pointermove", (e) => {
-    const r = strip.getBoundingClientRect();
-    const dx = clamp((e.clientX - (r.left + r.width / 2)) / (innerWidth / 2), 1);
-    const dy = clamp((e.clientY - (r.top + r.height / 2)) / (innerHeight / 2), 1);
-    target = -dx * 8; // 위가 매달려 있으니 반대로 돌려야 아래쪽이 커서를 따라간다
-    tilt = { x: -dy * 10, y: dx * 14 };
-    if (lastX !== null) speed = clamp(speed - (e.clientX - lastX) * 0.008, 1.2);
-    lastX = e.clientX;
+    if (last) {
+      const r = strip.getBoundingClientRect();
+      const gapX = Math.max(r.left - e.clientX, 0, e.clientX - r.right);
+      const gapY = Math.max(r.top - e.clientY, 0, e.clientY - r.bottom);
+      const near = Math.max(0, 1 - Math.hypot(gapX, gapY) / REACH);
+      const push = (e.clientX - last.x) * near;
+      // 위가 매달려 있으니 반대로 돌려야 아래쪽이 바람 부는 쪽으로 밀린다
+      speed = clamp(speed - push * 0.004, 0.6);
+      flutterSpeed = clamp(flutterSpeed + push * 0.01, 1.5);
+    }
+    last = { x: e.clientX };
   });
-  screen.addEventListener("pointerleave", () => {
-    target = 0;
-    tilt = { x: 0, y: 0 };
-    lastX = null;
-  });
+  screen.addEventListener("pointerleave", () => (last = null));
 
   (function step() {
     if (screen.classList.contains("hidden")) return; // 카메라가 켜지면 멈춘다
-    speed = (speed + (target - angle) * 0.04) * 0.9;
-    angle = clamp(angle + speed, 16);
-    now.x += (tilt.x - now.x) * 0.08;
-    now.y += (tilt.y - now.y) * 0.08;
-    strip.style.transform = `perspective(900px) rotateX(${now.x}deg) rotateY(${now.y}deg) rotate(${angle}deg)`;
+    speed = (speed - angle * 0.02) * 0.965;
+    angle = clamp(angle + speed, 9);
+    flutterSpeed = (flutterSpeed - flutter * 0.05) * 0.92;
+    flutter = clamp(flutter + flutterSpeed, 20);
+    strip.style.transform = `perspective(900px) rotateY(${flutter}deg) rotate(${angle}deg)`;
     requestAnimationFrame(step);
   })();
 }
