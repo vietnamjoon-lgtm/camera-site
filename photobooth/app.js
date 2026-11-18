@@ -84,8 +84,14 @@ function showCameraUI(show) {
   if (!show) setPicker(null);
 }
 
+// 모드마다 조명·금속 색이 다르다 (한 장 금빛, 네 컷 은빛, 움짤 로즈골드 — style.css)
+function setTheme(m) {
+  document.documentElement.dataset.theme = m;
+}
+
 function setMode(m) {
   mode = m;
+  setTheme(m);
   for (const b of $("mode").children) b.classList.toggle("on", b.dataset.mode === m);
 }
 
@@ -606,6 +612,7 @@ const MODE_HINTS = {
 
 function pickStartMode(m) {
   mode = m;
+  setTheme(m);
   for (const b of $("start-modes").children) b.classList.toggle("on", b.dataset.mode === m);
   $("start-hint").textContent = MODE_HINTS[m];
   showSheet($({ single: "sample-polaroid", four: "sample-strip", boomerang: "sample-gif" }[m]));
