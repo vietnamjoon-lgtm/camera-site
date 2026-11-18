@@ -16,6 +16,8 @@
   --metal-hi: linear-gradient(150deg, #ffffff 0%, #ccd0d8 48%, #e8eaee 72%, #bcc0c9 100%);
   --bad: #e0645c;
   --shade: rgba(0, 0, 0, 0.55); /* 걸린 사진 그림자 */
+  /* 매달린 인화지 그림자: 종이에 바짝 붙은 진한 그림자 + 멀리 퍼지는 옅은 그림자 */
+  --paper-shadow: 0 1px 1.5px rgba(0, 0, 0, 0.45), 0 6px 12px rgba(0, 0, 0, 0.35), 0 22px 44px var(--shade);
   --serif: "Gowun Batang", "Apple SD Gothic Neo", serif;
   /* 사진 나오는 구멍 위에서 비추는 은은한 조명 */
   --spotlight: radial-gradient(ellipse 70% 55% at 50% 0%, rgba(214, 220, 232, 0.1), transparent 70%);
@@ -216,7 +218,8 @@ svg {
   width: var(--w);
   transform-origin: 50% 0;
   rotate: -2deg;
-  box-shadow: 0 20px 40px var(--shade);
+  border-radius: 2px; /* 인화지 모서리는 아주 살짝 둥글다 */
+  box-shadow: var(--paper-shadow);
 }
 
 #sample-strip {
@@ -656,7 +659,8 @@ svg {
   max-height: calc(100% - 16px);
   transform-origin: 50% 0;
   rotate: -1.5deg;
-  box-shadow: 0 20px 40px var(--shade);
+  border-radius: 2px; /* 인화지 모서리는 아주 살짝 둥글다 */
+  box-shadow: var(--paper-shadow);
 }
 
 #result-controls {

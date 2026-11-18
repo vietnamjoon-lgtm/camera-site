@@ -15,6 +15,7 @@ import { BACKGROUNDS, loadBackground, loadPhoto } from "./backgrounds.js";
 import { recordFrames, encodeBoomerang } from "./boomerang.js";
 import { createFaceTracker, createSegmenter, createGestureRecognizer } from "./vision.js";
 import { makeSampleStrip, makeSamplePolaroid, makeSampleGifFrames, GIF_FRAME_MS } from "./sample-strip.js";
+import { printLook } from "./print-look.js";
 import { recordContinuously, saveRecording, timestampName } from "../recording.js";
 
 const $ = (id) => document.getElementById(id);
@@ -527,7 +528,8 @@ function renderResult() {
   const { compose } = RESULT_KINDS[result.kind];
   const images = result.kind === "single" ? result.shots[0] : result.shots;
   result.canvas = compose(images, result.layout, result.color, $("caption").value);
-  $("result-img").src = result.canvas.toDataURL("image/jpeg", 0.9);
+  // 화면에는 인화지 느낌을 입혀서 보여 주고, 저장은 깨끗한 원본으로
+  $("result-img").src = printLook(result.canvas).toDataURL("image/jpeg", 0.9);
   for (const b of $("layouts").children) b.classList.toggle("on", b.dataset.id === result.layout);
   for (const b of $("colors").children) b.classList.toggle("on", b.dataset.id === result.color);
   // 필름 날짜는 테두리·글씨가 없다
@@ -640,9 +642,9 @@ async function showSheet(next) {
 
 // 견본은 실제 사진을 불러와서 만든다. 못 불러와도 입장 화면은 쓸 수 있게 그냥 넘어간다
 const samplesReady = Promise.all([
-  makeSampleStrip().then((c) => ($("sample-strip").src = c.toDataURL("image/jpeg", 0.9))),
-  makeSamplePolaroid().then((c) => ($("sample-polaroid").src = c.toDataURL("image/jpeg", 0.9))),
-  makeSampleGifFrames().then(playSampleGif),
+  makeSampleStrip().then((c) => ($("sample-strip").src = printLook(c).toDataURL("image/jpeg", 0.9))),
+  makeSamplePolaroid().then((c) => ($("sample-polaroid").src = printLook(c).toDataURL("image/jpeg", 0.9))),
+  makeSampleGifFrames().then((frames) => playSampleGif(frames.map(printLook))),
 ]).catch((err) => console.error(err));
 
 // 움짤 견본은 앞으로 → 뒤로 계속 돌린다 (카메라가 켜지면 멈춘다)
