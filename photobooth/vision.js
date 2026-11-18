@@ -1,4 +1,5 @@
-// 얼굴 찾기(스티커용)와 사람/배경 나누기(배경용). 구글 MediaPipe를 쓰고, 처음 켤 때만 내려받는다.
+// 얼굴 찾기(스티커용), 사람/배경 나누기(배경용), 손 모양 알아보기(손으로 찍기용).
+// 구글 MediaPipe를 쓰고, 처음 켤 때만 내려받는다.
 const MP = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35";
 const MODELS = "https://storage.googleapis.com/mediapipe-models";
 
@@ -31,6 +32,23 @@ export async function createFaceTracker() {
     // 얼굴마다 점 478개 (0~1, 카메라 원본 기준 — 좌우 반전 전)
     detect(video, time) {
       return landmarker.detectForVideo(video, time).faceLandmarks;
+    },
+  };
+}
+
+export async function createGestureRecognizer() {
+  const { mp, files } = await fileset();
+  const recognizer = await create(mp.GestureRecognizer, files, {
+    baseOptions: { modelAssetPath: `${MODELS}/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task` },
+    runningMode: "VIDEO",
+    numHands: 2,
+  });
+  return {
+    // 화면 속 누군가 손바닥을 펴서 보이고 있는지 (브이·엄지척은 아님)
+    openPalm(video, time) {
+      return recognizer
+        .recognizeForVideo(video, time)
+        .gestures.some((g) => g[0]?.categoryName === "Open_Palm" && g[0].score > 0.6);
     },
   };
 }

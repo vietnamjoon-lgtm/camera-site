@@ -3,8 +3,9 @@
 // 네 컷 모드는 셔터 한 번에 네 장을 연속으로 찍고, 결과 화면에서 모양·프레임 색·글씨를 골라 합본을 저장한다.
 // 움짤 모드는 2초를 찍어 부메랑 GIF로. 얼굴 스티커와 배경 바꾸기는 어느 모드에서나 함께 찍힌다.
 // 켜져 있는 동안은 카메라 원본도 계속 녹화해서 따로 보낸다 (사진은 iPad/사진, 영상은 iPad/영상 — apps-script.gs).
+// 손으로 찍기를 켜 두면 카메라에 손바닥을 잠깐 보여 주는 것만으로 셔터가 눌린다.
 // 테스트용 주소: ?auto (바로 시작) &effect=<id> (처음 효과) &grid=<페이지> (격자 열기) &mode=four|boomerang
-//               &sticker=<id> &bg=<id> (처음 스티커·배경)
+//               &sticker=<id> &bg=<id> (처음 스티커·배경) &hand (손으로 찍기 켜기)
 import { EFFECTS, PAGE_SIZE } from "./effects.js";
 import { createRenderer } from "./renderer.js";
 import { LAYOUTS, FRAME_COLORS, composeFourCut } from "./fourcut.js";
@@ -12,7 +13,7 @@ import { SINGLE_LAYOUTS, composeSingle } from "./single.js";
 import { STICKERS, drawSticker } from "./stickers.js";
 import { BACKGROUNDS, paintBackground, loadPhoto } from "./backgrounds.js";
 import { recordFrames, encodeBoomerang } from "./boomerang.js";
-import { createFaceTracker, createSegmenter } from "./vision.js";
+import { createFaceTracker, createSegmenter, createGestureRecognizer } from "./vision.js";
 import { makeSampleStrip, makeSamplePolaroid, makeSampleGifFrames, GIF_FRAME_MS } from "./sample-strip.js";
 import { recordContinuously, saveRecording, timestampName } from "../recording.js";
 
@@ -42,6 +43,8 @@ let lastTrack = 0;
 // 얼굴 찾기·배경 나누기는 처음 쓸 때 한 번만 불러온다 (vision.js)
 let faceTracker = null;
 let segmenter = null;
+let palmReader = null;
+let handOn = false;
 
 // ---------- 소리 (파일 없이 Web Audio로 만든다) ----------
 
@@ -90,6 +93,7 @@ function setBusy(on) {
   $("effects").disabled = on;
   $("sticker-btn").disabled = on;
   $("bg-btn").disabled = on;
+  $("hand-btn").disabled = on;
   for (const b of $("mode").children) b.disabled = on;
   if (on) setPicker(null);
 }
@@ -150,6 +154,61 @@ async function chooseSticker(id) {
   faces = [];
   if (picker) setPicker(picker);
   showLabel(STICKERS.find((s) => s.id === id).name);
+}
+
+// ---------- 손으로 찍기 ----------
+
+const HAND_KEY = "photobooth.hand";
+const HOLD_MS = 600; // 손바닥을 이만큼 보여 주면 찍는다
+let palmSince = 0; // 손바닥이 계속 보이기 시작한 시각
+let lastPalm = 0; // 마지막으로 손바닥이 보인 시각
+let palmArmed = true; // 한 번 찍으면 손을 내렸다가 다시 들어야 또 찍힌다
+let lastHand = 0;
+
+function setPalmProgress(p) {
+  $("shutter").style.setProperty("--palm", p);
+}
+
+let palmReaderLoad = null;
+async function setHand(on) {
+  if (on && !palmReader) {
+    palmReaderLoad ??= prepare(createGestureRecognizer, "손 인식");
+    palmReader = await palmReaderLoad;
+    palmReaderLoad = null;
+    if (!palmReader) return;
+  }
+  handOn = on;
+  palmSince = 0;
+  setPalmProgress(0);
+  $("hand-btn").classList.toggle("on", on);
+  $("hand-btn").setAttribute("aria-pressed", on);
+  try {
+    localStorage.setItem(HAND_KEY, on ? "on" : "off");
+  } catch {}
+  showLabel(on ? "✋ 손바닥을 보여 주면 찍어요" : "손으로 찍기 끔", 2500);
+}
+
+// 1초에 10번 손을 본다. 한두 번 놓친 건 봐준다
+function checkPalm(now) {
+  if (now - lastHand < 100) return;
+  lastHand = now;
+  const palm = palmReader.openPalm(video, now);
+  if (palm) lastPalm = now;
+  const gone = now - lastPalm;
+  if (gone > 250) palmSince = 0;
+  if (gone > 500) palmArmed = true;
+  const ready = palmArmed && !busy && gridPage < 0;
+  if (!ready || palmSince === 0) setPalmProgress(0);
+  if (!palm || !ready) return;
+  palmSince ||= now;
+  const p = Math.min(1, (now - palmSince) / HOLD_MS);
+  setPalmProgress(p);
+  if (p === 1) {
+    palmArmed = false;
+    palmSince = 0;
+    setPalmProgress(0);
+    shoot();
+  }
 }
 
 let segmenterLoad = null;
@@ -252,6 +311,8 @@ function track() {
   try {
     if (segmenter && background !== "none") renderer.setMask(segmenter.mask(video, now));
     if (faceTracker && sticker !== "none" && gridPage < 0) faces = faceTracker.detect(video, now);
+    // 효과 고르는 중이거나 결과 화면에서는 손을 안 본다
+    if (palmReader && handOn && gridPage < 0 && $("result").classList.contains("hidden")) checkPalm(now);
   } catch (err) {
     console.error(err);
   }
@@ -483,6 +544,9 @@ function openResult(kind, shots, stamp) {
 }
 
 function closeResult() {
+  // 결과 화면을 닫자마자 들고 있던 손에 또 찍히지 않게, 손을 한 번 내려야 다시 찍힌다
+  lastPalm = performance.now();
+  palmArmed = false;
   result.shots.forEach((b) => b.close?.());
   result.shots = [];
   $("result").classList.add("hidden");
@@ -659,6 +723,11 @@ async function start() {
     else showLabel();
     if (STICKERS.some((s) => s.id === params.get("sticker"))) chooseSticker(params.get("sticker"));
     if (BACKGROUNDS.some((b) => b.id === params.get("bg"))) chooseBackground(params.get("bg"));
+    let handSaved = null;
+    try {
+      handSaved = localStorage.getItem(HAND_KEY);
+    } catch {}
+    if (params.has("hand") || handSaved === "on") setHand(true);
   } catch (err) {
     console.error(err);
     $("error").textContent =
@@ -677,6 +746,7 @@ $("next").addEventListener("click", () => openGrid(gridPage + 1));
 for (const b of $("mode").children) b.addEventListener("click", () => setMode(b.dataset.mode));
 $("sticker-btn").addEventListener("click", () => setPicker(picker === "sticker" ? null : "sticker"));
 $("bg-btn").addEventListener("click", () => setPicker(picker === "bg" ? null : "bg"));
+$("hand-btn").addEventListener("click", () => setHand(!handOn));
 $("photo").addEventListener("change", async () => {
   const file = $("photo").files[0];
   $("photo").value = "";

@@ -338,12 +338,25 @@ button {
 }
 
 #shutter {
+  position: relative;
   width: 76px;
   height: 76px;
   border-radius: 50%;
   border: 5px solid #fff;
   background: rgba(255, 255, 255, 0.25);
   transition: transform 0.1s;
+}
+
+/* 손바닥을 보여 주는 동안 셔터 둘레가 시계 방향으로 차오른다 (--palm: 0~1, app.js) */
+#shutter::after {
+  content: "";
+  position: absolute;
+  inset: -11px;
+  border-radius: 50%;
+  background: conic-gradient(#ffd60a calc(var(--palm, 0) * 360deg), transparent 0);
+  -webkit-mask: radial-gradient(closest-side, transparent 84%, #000 86%);
+  mask: radial-gradient(closest-side, transparent 84%, #000 86%);
+  pointer-events: none;
 }
 
 #shutter:active {
@@ -451,6 +464,12 @@ button {
 
 #tools .side:disabled {
   opacity: 0.4;
+}
+
+/* 손으로 찍기는 고르는 줄이 아니라 켜고 끄는 버튼 */
+#tools #hand-btn.on {
+  outline: none;
+  background: var(--blue);
 }
 
 #picker {
