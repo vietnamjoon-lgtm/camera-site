@@ -162,9 +162,10 @@ export function createRenderer(canvas, video, effects) {
       }
     },
 
-    clear() {
+    // 칸 사이 틈 색 (0~1)
+    clear([r, g, b] = [0, 0, 0]) {
       gl.scissor(0, 0, canvas.width, canvas.height);
-      gl.clearColor(0, 0, 0, 1);
+      gl.clearColor(r, g, b, 1);
       gl.clear(gl.COLOR_BUFFER_BIT);
     },
 
