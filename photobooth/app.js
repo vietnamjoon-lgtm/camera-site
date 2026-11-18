@@ -16,6 +16,7 @@ import { recordFrames, encodeBoomerang } from "./boomerang.js";
 import { createFaceTracker, createSegmenter, createGestureRecognizer } from "./vision.js";
 import { makeSampleStrip, makeSamplePolaroid, makeSampleGifFrames, GIF_FRAME_MS } from "./sample-strip.js";
 import { printLook } from "./print-look.js";
+import { applyTheme, randomTheme } from "./themes.js";
 import { recordContinuously, saveRecording, timestampName } from "../recording.js";
 
 const $ = (id) => document.getElementById(id);
@@ -84,16 +85,16 @@ function showCameraUI(show) {
   if (!show) setPicker(null);
 }
 
-// 모드마다 사진관 분위기가 다르다 (한 장 금빛 갈색, 네 컷 은빛 검정, 움짤 보랏빛 로즈골드 — style.css)
-const THEME_BG = { single: "#1b130c", four: "#120d10", boomerang: "#170f22" };
-function setTheme(m) {
-  document.documentElement.dataset.theme = m;
-  document.querySelector('meta[name="theme-color"]').content = THEME_BG[m]; // 폰 위쪽 상태 표시줄 색
+// 모드를 누를 때마다 사진관 테마가 랜덤으로 바뀐다 (themes.js). 포토카드 테두리도 그 테마 색
+let theme = null;
+function shuffleTheme() {
+  theme = randomTheme(theme);
+  applyTheme(theme);
 }
 
-function setMode(m) {
+function setMode(m, shuffle = true) {
   mode = m;
-  setTheme(m);
+  if (shuffle) shuffleTheme();
   for (const b of $("mode").children) b.classList.toggle("on", b.dataset.mode === m);
 }
 
@@ -546,11 +547,13 @@ function renderResult() {
   $("caption").classList.toggle("hidden", plain);
 }
 
-// 결과 프레임은 처음에 지금 모드 테마와 같은 금속 박으로 나온다 (다른 색은 골라서 바꾼다)
-const THEME_FRAME = { single: "gold", four: "silver", boomerang: "rose" };
+// 결과 프레임은 처음에 지금 테마의 금속 박으로 나온다. 고르는 색: 흰색 · 테마 금속 · 검정 · 파스텔
+const PLAIN_COLORS = FRAME_COLORS.filter((c) => !c.foil);
 
 function openResult(kind, shots, stamp) {
-  Object.assign(result, { kind, shots, stamp, layout: lastLayout[kind], color: THEME_FRAME[mode] });
+  Object.assign(result, { kind, shots, stamp, layout: lastLayout[kind], color: theme.id });
+  const [white, ...rest] = PLAIN_COLORS;
+  $("colors").replaceChildren(...[white, FRAME_COLORS.find((c) => c.id === theme.id), ...rest].map(colorButton));
   $("layouts").replaceChildren(
     ...RESULT_KINDS[kind].layouts.map((l) => {
       const b = document.createElement("button");
@@ -592,20 +595,18 @@ async function saveResult() {
   closeResult();
 }
 
-$("colors").replaceChildren(
-  ...FRAME_COLORS.map((c) => {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.dataset.id = c.id;
-    b.style.background = swatch(c);
-    b.setAttribute("aria-label", c.name);
-    b.addEventListener("click", () => {
-      result.color = c.id;
-      renderResult();
-    });
-    return b;
-  })
-);
+function colorButton(c) {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.dataset.id = c.id;
+  b.style.background = swatch(c);
+  b.setAttribute("aria-label", c.name);
+  b.addEventListener("click", () => {
+    result.color = c.id;
+    renderResult();
+  });
+  return b;
+}
 
 // ---------- 입장 화면 · 시작 ----------
 
@@ -617,13 +618,13 @@ const MODE_HINTS = {
 
 function pickStartMode(m) {
   mode = m;
-  setTheme(m);
+  shuffleTheme();
   for (const b of $("start-modes").children) b.classList.toggle("on", b.dataset.mode === m);
   $("start-hint").textContent = MODE_HINTS[m];
-  showSheet($({ single: "sample-polaroid", four: "sample-strip", boomerang: "sample-gif" }[m]));
+  showSheet($({ single: "sample-polaroid", four: "sample-strip", boomerang: "sample-gif" }[m]), theme.id);
 }
 
-// 견본 사진은 기계 구멍에서 끊어 끊어 밀려 나오고, 모드를 바꾸면 쏙 들어간 뒤 다른 게 나온다
+// 견본 사진은 기계 구멍에서 끊어 끊어 밀려 나오고, 모드를 바꾸면 쏙 들어간 뒤 새 테마 테두리로 다시 나온다
 const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const FEED = [0, 0.22, 0.45, 0.67, 0.88, 1].map((k, i, all) => ({
   translate: `0 ${-100 + k * 100}%`,
@@ -633,10 +634,14 @@ const FEED = [0, 0.22, 0.45, 0.67, 0.88, 1].map((k, i, all) => ({
 let sheet = null; // 지금 걸려 있는 견본
 let sheetTurn = 0; // 빠르게 여러 번 바꿔도 마지막 것만 나오게
 
-async function showSheet(next) {
-  if (next === sheet) return;
+async function showSheet(next, colorId) {
   const turn = ++sheetTurn;
-  await samplesReady; // 견본 사진을 다 불러온 뒤에 뽑혀 나온다
+  let put;
+  try {
+    put = await sampleFor(next.id, colorId); // 견본 사진을 다 만든 뒤에 뽑혀 나온다
+  } catch (err) {
+    return console.error(err); // 사진을 못 불러와도 입장 화면은 그대로 쓸 수 있다
+  }
   if (turn !== sheetTurn) return;
   const prev = sheet;
   sheet = next;
@@ -647,32 +652,56 @@ async function showSheet(next) {
   prev?.classList.add("hidden");
   prev?.getAnimations().forEach((a) => a.cancel());
   next.getAnimations().forEach((a) => a.cancel()); // 바꾸다 만 들어가기 움직임이 남아 있으면 지운다
+  put();
   next.parentElement.dataset.sheet = next.id;
   next.classList.remove("hidden");
   if (!calm) next.animate(FEED, { duration: 1500, fill: "backwards" });
 }
 
-// 견본은 실제 사진을 불러와서 만든다. 못 불러와도 입장 화면은 쓸 수 있게 그냥 넘어간다
-const samplesReady = Promise.all([
-  makeSampleStrip().then((c) => ($("sample-strip").src = printLook(c).toDataURL("image/jpeg", 0.9))),
-  makeSamplePolaroid().then((c) => ($("sample-polaroid").src = printLook(c).toDataURL("image/jpeg", 0.9))),
-  makeSampleGifFrames().then((frames) => playSampleGif(frames.map(printLook))),
-]).catch((err) => console.error(err));
+// 견본은 실제 사진을 불러와서 테마 테두리를 씌워 만든다. 한 번 만든 건 기억해 둔다.
+// 돌려주는 함수를 부르면 화면의 견본이 그걸로 바뀐다
+const samples = new Map();
+function sampleFor(id, colorId) {
+  const key = `${id}/${colorId}`;
+  if (!samples.has(key)) {
+    const made = id === "sample-gif" ? gifSample(colorId) : stillSample(id, colorId);
+    made.catch(() => samples.delete(key)); // 실패하면 다음에 다시 시도
+    samples.set(key, made);
+  }
+  return samples.get(key);
+}
+
+async function stillSample(id, colorId) {
+  const make = id === "sample-strip" ? makeSampleStrip : makeSamplePolaroid;
+  const img = new Image();
+  img.src = printLook(await make(colorId)).toDataURL("image/jpeg", 0.9);
+  await img.decode(); // 뽑혀 나오는 동안 비어 보이지 않게 미리 풀어 둔다
+  return () => ($(id).src = img.src);
+}
+
+async function gifSample(colorId) {
+  const frames = (await makeSampleGifFrames(colorId)).map(printLook);
+  return () => playSampleGif(frames);
+}
 
 // 움짤 견본은 앞으로 → 뒤로 계속 돌린다 (카메라가 켜지면 멈춘다)
+let gifOrder = null;
 function playSampleGif(frames) {
-  const order = [...frames, ...frames.slice(1, -1).reverse()];
+  const first = !gifOrder;
+  gifOrder = [...frames, ...frames.slice(1, -1).reverse()];
   const el = $("sample-gif");
   el.width = frames[0].width;
   el.height = frames[0].height;
   const ctx = el.getContext("2d");
+  ctx.drawImage(gifOrder[0], 0, 0);
+  if (!first) return; // 이미 돌고 있으면 그림만 바꾼다
   const started = performance.now();
-  let shown = -1;
+  let shown = 0;
   (function step(now) {
     if ($("start-screen").classList.contains("hidden")) return;
-    const i = Math.floor(Math.max(0, now - started) / GIF_FRAME_MS) % order.length; // 첫 rAF 시각이 시작보다 살짝 이를 수 있다
-    if (i !== shown && !(calm && shown >= 0)) {
-      ctx.drawImage(order[i], 0, 0);
+    const i = Math.floor(Math.max(0, now - started) / GIF_FRAME_MS) % gifOrder.length; // 첫 rAF 시각이 시작보다 살짝 이를 수 있다
+    if (i !== shown && !calm) {
+      ctx.drawImage(gifOrder[i], 0, 0);
       shown = i;
     }
     requestAnimationFrame(step);
@@ -751,7 +780,7 @@ async function start() {
     $("start-screen").classList.add("hidden");
     flashScreen();
     showCameraUI(true);
-    setMode(mode);
+    setMode(mode, false); // 입장 화면에서 고른 테마 그대로 카메라로
     requestAnimationFrame(frame);
 
     if (params.has("grid")) openGrid(Number(params.get("grid")) - 1 || 0);

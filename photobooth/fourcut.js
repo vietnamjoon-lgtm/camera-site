@@ -1,3 +1,5 @@
+import { THEMES } from "./themes.js";
+
 // 네 컷: 찍은 네 장을 프레임 하나에 합쳐서 이미지(캔버스)로 만든다.
 // 화면 모양과 상관없이 칸 크기를 똑같이 맞추려고, 사진마다 가운데를 기준으로 칸 비율에 맞게 잘라 넣는다.
 
@@ -7,17 +9,15 @@ export const LAYOUTS = [
 ];
 
 // ink: 프레임 위 글자색 (프레임 색에 따라 잘 보이는 색)
-// foil: 금속 박 프레임 (비스듬히 빛이 지나가는 색 네 개). 모드 테마 색과 같다
+// foil: 금속 박 프레임 (비스듬히 빛이 지나가는 색 네 개). 테마마다 하나씩 있다 (id가 테마 id)
 export const FRAME_COLORS = [
   { id: "white", name: "흰색", bg: "#ffffff", ink: "#1d1d1f" },
-  { id: "gold", name: "골드", bg: "#e6cf98", foil: ["#f6e6b8", "#cfae6a", "#efdcaa", "#b8924f"], ink: "#4a3510" },
-  { id: "silver", name: "실버", bg: "#d9dce2", foil: ["#f2f3f6", "#c3c7cf", "#e3e5ea", "#adb2bc"], ink: "#26282e" },
-  { id: "rose", name: "로즈골드", bg: "#ecc4bd", foil: ["#f9e0da", "#d6a29b", "#f1cfc8", "#c08a84"], ink: "#5a2a2a" },
   { id: "black", name: "검정", bg: "#111111", ink: "#ffffff" },
   { id: "pink", name: "핑크", bg: "#ffb6cf", ink: "#5a1030" },
   { id: "sky", name: "하늘", bg: "#a8dcff", ink: "#0b3a5c" },
   { id: "yellow", name: "노랑", bg: "#ffe66d", ink: "#4a3b00" },
   { id: "purple", name: "보라", bg: "#c9b3ff", ink: "#2b145e" },
+  ...THEMES.map((t) => ({ id: t.id, name: t.name, bg: t.metal[1], foil: t.metal, ink: t.frameInk })),
 ];
 
 const PAD = 36; // 바깥 여백
