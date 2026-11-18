@@ -11,7 +11,7 @@ import { createRenderer } from "./renderer.js";
 import { LAYOUTS, FRAME_COLORS, composeFourCut } from "./fourcut.js";
 import { SINGLE_LAYOUTS, composeSingle } from "./single.js";
 import { STICKERS, drawSticker } from "./stickers.js";
-import { BACKGROUNDS, paintBackground, loadPhoto } from "./backgrounds.js";
+import { BACKGROUNDS, loadBackground, loadPhoto } from "./backgrounds.js";
 import { recordFrames, encodeBoomerang } from "./boomerang.js";
 import { createFaceTracker, createSegmenter, createGestureRecognizer } from "./vision.js";
 import { makeSampleStrip, makeSamplePolaroid, makeSampleGifFrames, GIF_FRAME_MS } from "./sample-strip.js";
@@ -220,10 +220,21 @@ async function chooseBackground(id) {
     segmenterLoad = null;
     if (!segmenter) return;
   }
+  let image = null;
+  if (id === "photo") image = bgPhoto;
+  else if (id !== "none" && id !== "blur") {
+    try {
+      image = await loadBackground(id);
+    } catch (err) {
+      console.error(err);
+      showLabel("⚠️ 배경 사진을 못 불러왔어요 (인터넷 확인)", 3000);
+      return;
+    }
+  }
   background = id;
   if (id === "none") renderer.setBackground("off");
   else if (id === "blur") renderer.setBackground("blur");
-  else renderer.setBackground("image", id === "photo" ? bgPhoto : paintBackground(id));
+  else renderer.setBackground("image", image);
   lastTrack = 0; // 다음 그림부터 바로 마스크를 새로 만든다
   if (picker) setPicker(picker);
   showLabel(id === "photo" ? "내 사진" : BACKGROUNDS.find((b) => b.id === id).name);
@@ -611,6 +622,8 @@ let sheetTurn = 0; // 빠르게 여러 번 바꿔도 마지막 것만 나오게
 async function showSheet(next) {
   if (next === sheet) return;
   const turn = ++sheetTurn;
+  await samplesReady; // 견본 사진을 다 불러온 뒤에 뽑혀 나온다
+  if (turn !== sheetTurn) return;
   const prev = sheet;
   sheet = next;
   if (prev && !calm) {
@@ -625,12 +638,15 @@ async function showSheet(next) {
   if (!calm) next.animate(FEED, { duration: 1500, fill: "backwards" });
 }
 
-$("sample-strip").src = makeSampleStrip().toDataURL("image/jpeg", 0.9);
-$("sample-polaroid").src = makeSamplePolaroid().toDataURL("image/jpeg", 0.9);
+// 견본은 실제 사진을 불러와서 만든다. 못 불러와도 입장 화면은 쓸 수 있게 그냥 넘어간다
+const samplesReady = Promise.all([
+  makeSampleStrip().then((c) => ($("sample-strip").src = c.toDataURL("image/jpeg", 0.9))),
+  makeSamplePolaroid().then((c) => ($("sample-polaroid").src = c.toDataURL("image/jpeg", 0.9))),
+  makeSampleGifFrames().then(playSampleGif),
+]).catch((err) => console.error(err));
 
 // 움짤 견본은 앞으로 → 뒤로 계속 돌린다 (카메라가 켜지면 멈춘다)
-function playSampleGif() {
-  const frames = makeSampleGifFrames();
+function playSampleGif(frames) {
   const order = [...frames, ...frames.slice(1, -1).reverse()];
   const el = $("sample-gif");
   el.width = frames[0].width;
@@ -648,7 +664,6 @@ function playSampleGif() {
     requestAnimationFrame(step);
   })(started);
 }
-playSampleGif();
 pickStartMode(mode);
 
 // 견본은 기계에 매달린 종이. 커서(손가락)가 근처를 스치면 그 방향으로 바람을 맞은 것처럼

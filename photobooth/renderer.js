@@ -158,7 +158,7 @@ export function createRenderer(canvas, video, effects) {
       bgMode = { off: 0, blur: 1, image: 2 }[mode];
       if (mode === "image") {
         uploadTo(2, gl.RGB, image);
-        bgAspect = image.width / image.height;
+        bgAspect = (image.naturalWidth || image.width) / (image.naturalHeight || image.height);
       }
     },
 
