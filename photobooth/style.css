@@ -861,6 +861,78 @@ svg {
   }
 }
 
+/* ----- 마우스를 올리면 (맥처럼 마우스가 있을 때만. 아이폰·아이패드는 누른 뒤 색이 남아서 뺀다) ----- */
+
+:root {
+  --pink-deep: #ff3d8d;
+}
+
+.tool,
+.deck-btn .ring,
+.segmented button,
+#picker button,
+#result-actions button,
+#colors button,
+#thumb-img,
+#grid button span {
+  transition: background-color 0.15s, color 0.15s, transform 0.15s;
+}
+
+#start,
+#shutter {
+  transition: transform 0.15s, background-color 0.15s;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  /* 흰 알약 버튼은 연보라로 */
+  .tool:hover:not(:disabled):not(.on),
+  .deck-btn:hover:not(:disabled) .ring,
+  #result-actions #retake:hover:not(:disabled) {
+    background: var(--track);
+  }
+
+  /* 핑크 버튼은 더 진한 핑크로 */
+  .tool.on:hover:not(:disabled),
+  #result-actions #save:hover:not(:disabled) {
+    background: var(--pink-deep);
+  }
+
+  /* 셔터는 살짝 커지면서 진해진다 */
+  #start:hover:not(:disabled),
+  #shutter:hover:not(:disabled) {
+    background: var(--pink-deep);
+    transform: scale(1.06);
+  }
+
+  .segmented button:hover:not(.on):not(:disabled) {
+    color: var(--ink);
+    background: rgba(255, 255, 255, 0.7);
+  }
+
+  #picker button:hover:not(.on) {
+    background: var(--track);
+  }
+
+  #colors button:hover:not(.on) {
+    transform: scale(1.15);
+  }
+
+  /* 방금 찍은 사진은 붙인 스티커처럼 살짝 기운다 */
+  #thumb.has-photo:hover #thumb-img {
+    transform: rotate(-6deg) scale(1.06);
+  }
+
+  #grid button:hover:not(.current) {
+    outline: 4px solid var(--paper);
+    outline-offset: -4px;
+  }
+
+  #grid button:hover:not(.current) span {
+    color: var(--paper);
+    background: var(--ink);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   #thumb-badge.up {
     animation: none;
