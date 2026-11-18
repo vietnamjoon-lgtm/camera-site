@@ -25,7 +25,7 @@ const overlayCtx = overlay.getContext("2d");
 const params = new URLSearchParams(location.search);
 
 const PAGES = Math.ceil(EFFECTS.length / PAGE_SIZE);
-const LILAC = [0xee / 255, 0xe8 / 255, 1]; // 격자 칸 사이 틈 = 배경색 (style.css --bg)
+const GAP_COLOR = [0x12 / 255, 0x0d / 255, 0x10 / 255]; // 격자 칸 사이 틈 = 배경색 (style.css --bg)
 const GAP = 4; // 격자 칸 사이 간격 (CSS px)
 
 let renderer = null;
@@ -347,7 +347,7 @@ function frame() {
   if (!renderer.upload()) return;
   track();
   drawStickers();
-  renderer.clear(LILAC);
+  renderer.clear(GAP_COLOR);
   if (gridPage < 0) {
     renderer.draw(current, 0, 0, canvas.width, canvas.height);
     return;

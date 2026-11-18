@@ -1,17 +1,21 @@
-/* 찰칵 부스: 스티커 사진관 색감. 연보라 바탕에 자두색 글씨, 풍선껌 핑크 셔터, 민트 포인트.
-   제목 "찰칵 부스"만 오려 붙인 스티커처럼 (Jua 글꼴 + 흰 테두리), 나머지는 기본 글꼴로 조용하게 */
+/* 찰칵 부스: 벨벳 커튼 사진관. 와인빛 검정 바탕, 아이보리 글씨, 샴페인 골드 포인트.
+   제목은 명조(고운바탕), 나머지는 기본 글꼴로 조용하게. 꾸밈은 사진 나오는 구멍 위 조명 하나만 */
 
 :root {
-  --bg: #eee8ff; /* 연보라 바탕 */
-  --track: #dcd2fa; /* 모양 전환 바닥, 눌린 칸 */
-  --ink: #2b1640; /* 자두색 글씨 · 기계 구멍 */
-  --ink-dim: rgba(43, 22, 64, 0.62);
-  --pink: #ff5fa2; /* 셔터 · 저장 */
-  --mint: #7be0c3; /* 손 인식 링 · 저장 완료 */
-  --paper: #ffffff; /* 흰 알약 버튼 · 인화지 */
-  --bad: #e8336b;
-  --shade: rgba(43, 22, 64, 0.22); /* 걸린 사진 그림자 */
-  --sticker: "Jua", var(--display);
+  --bg: #120d10; /* 와인빛 검정 바탕 */
+  --surface: #1e171b; /* 버튼 · 알약 바탕 */
+  --surface-hi: #2a2125; /* 마우스 올렸을 때 */
+  --line: rgba(242, 235, 223, 0.12); /* 얇은 테두리 */
+  --ink: #f2ebdf; /* 아이보리 글씨 */
+  --ink-dim: rgba(242, 235, 223, 0.58);
+  --gold: #cfae74; /* 셔터 · 저장 · 고른 것 */
+  --gold-hi: #dcc08c;
+  --on-gold: #1a1214; /* 골드 위 글씨 */
+  --bad: #e0645c;
+  --shade: rgba(0, 0, 0, 0.55); /* 걸린 사진 그림자 */
+  --serif: "Gowun Batang", "Apple SD Gothic Neo", serif;
+  /* 사진 나오는 구멍 위에서 비추는 은은한 조명 */
+  --spotlight: radial-gradient(ellipse 70% 55% at 50% 0%, rgba(207, 174, 116, 0.13), transparent 70%);
 
   /* 카메라 아래(가로로 든 폰은 오른쪽)에 받침을 깔고, 카메라 화면은 나머지만 쓴다.
      그래서 화면에 보이는 그대로가 사진에 찍힌다 */
@@ -48,7 +52,7 @@ button {
 svg {
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.8;
+  stroke-width: 1.6;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -84,33 +88,35 @@ svg {
 
 /* ----- 함께 쓰는 것: 기계 구멍, 모양 전환, 셔터 ----- */
 
-/* 사진이 나오는 기계 구멍 */
+/* 사진이 나오는 기계 구멍 (아래 가장자리에 금빛 실선) */
 .slot {
   position: relative;
   z-index: 1;
   height: 14px;
   border-radius: 0 0 8px 8px;
-  background: var(--ink);
+  background: #050304;
+  box-shadow: inset 0 -1px 0 rgba(207, 174, 116, 0.55), 0 6px 14px rgba(0, 0, 0, 0.6);
 }
 
 .segmented {
   display: flex;
   padding: 3px;
   border-radius: 999px;
-  background: var(--track);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line);
 }
 
 .segmented button {
   padding: 7px 16px;
   border-radius: 999px;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--ink-dim);
   white-space: nowrap;
 }
 
 .segmented button.on {
-  color: var(--paper);
+  color: var(--on-gold);
   background: var(--ink);
 }
 
@@ -118,15 +124,14 @@ svg {
   opacity: 0.5;
 }
 
-/* 흰 테두리 안에 핑크 알: 입장 화면과 카메라 받침이 같은 셔터 */
+/* 아이보리 테두리 안에 금빛 알: 입장 화면과 카메라 받침이 같은 셔터 */
 #start,
 #shutter {
   position: relative;
   border-radius: 50%;
-  border: 5px solid var(--paper);
-  background: var(--pink);
-  box-shadow: 0 0 0 2px var(--track), inset 0 0 0 4px var(--paper);
-  transition: transform 0.1s;
+  border: 4px solid var(--ink);
+  background: var(--gold);
+  box-shadow: inset 0 0 0 4px var(--bg);
 }
 
 #start:active,
@@ -146,7 +151,7 @@ svg {
 .deck-btn:focus-visible .ring,
 .tool:focus-visible,
 #result-actions button:focus-visible {
-  outline: 3px solid var(--ink);
+  outline: 2px solid var(--gold);
   outline-offset: 3px;
 }
 
@@ -157,7 +162,7 @@ svg {
   inset: 0;
   overflow-x: hidden;
   overflow-y: auto;
-  background: var(--bg);
+  background: var(--spotlight), var(--bg);
 }
 
 /* 세로 화면: 위에 견본 사진, 아래에 글씨와 셔터. 가로 화면은 아래에서 두 칸으로 */
@@ -208,7 +213,7 @@ svg {
   width: var(--w);
   transform-origin: 50% 0;
   rotate: -2deg;
-  box-shadow: 0 16px 32px var(--shade);
+  box-shadow: 0 20px 40px var(--shade);
 }
 
 #sample-strip {
@@ -239,32 +244,25 @@ svg {
   text-align: center;
 }
 
-/* 오려서 비스듬히 붙인 스티커 같은 제목 (흰 테두리는 그림자 여러 겹으로) */
 .intro h1 {
-  display: inline-block;
   margin: 0;
-  font-family: var(--sticker);
-  font-size: 46px;
-  font-weight: 400;
+  font-family: var(--serif);
+  font-size: 42px;
+  font-weight: 700;
   line-height: 1.15;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.04em;
   color: var(--ink);
-  rotate: -3deg;
-  text-shadow:
-    3px 0 var(--paper), -3px 0 var(--paper), 0 3px var(--paper), 0 -3px var(--paper),
-    2px 2px var(--paper), -2px -2px var(--paper), 2px -2px var(--paper), -2px 2px var(--paper),
-    0 7px 0 var(--track);
 }
 
 .lede {
   margin: 12px 0 0;
   color: var(--ink-dim);
-  font-size: 16px;
-  line-height: 1.5;
+  font-size: 15px;
+  line-height: 1.6;
 }
 
 .controls {
-  margin-top: 24px;
+  margin-top: 26px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -278,20 +276,23 @@ svg {
 }
 
 #start {
-  width: 80px;
-  height: 80px;
+  width: 78px;
+  height: 78px;
 }
 
 #error {
   margin: 14px 0 0;
   color: var(--bad);
   font-size: 15px;
-  font-weight: 600;
   text-align: center;
 }
 
 /* 아이패드·맥처럼 넓은 가로 화면: 왼쪽에 견본, 오른쪽에 글씨 */
 @media (min-width: 700px) and (min-aspect-ratio: 1/1) {
+  #start-screen {
+    background: radial-gradient(ellipse 45% 60% at 30% 0%, rgba(207, 174, 116, 0.13), transparent 70%), var(--bg);
+  }
+
   .booth {
     flex-direction: row;
     justify-content: center;
@@ -311,7 +312,7 @@ svg {
   }
 
   .intro h1 {
-    font-size: 64px;
+    font-size: 58px;
   }
 
   .controls {
@@ -334,7 +335,7 @@ svg {
   }
 
   .intro h1 {
-    font-size: 38px;
+    font-size: 34px;
   }
 
   .controls {
@@ -366,7 +367,7 @@ svg {
   }
 
   .intro h1 {
-    font-size: 40px;
+    font-size: 36px;
   }
 
   .controls {
@@ -389,6 +390,7 @@ svg {
   gap: 16px;
   padding-bottom: env(safe-area-inset-bottom, 0px);
   background: var(--bg);
+  box-shadow: inset 0 1px 0 var(--line);
 }
 
 .deck-row {
@@ -401,8 +403,10 @@ svg {
 #grid-bar .deck-row {
   justify-content: center;
   gap: 36px;
-  font-size: 17px;
+  font-family: var(--serif);
+  font-size: 18px;
   font-weight: 700;
+  letter-spacing: 0.06em;
 }
 
 .deck-btn {
@@ -412,7 +416,7 @@ svg {
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--ink-dim);
 }
 
@@ -423,7 +427,8 @@ svg {
   display: grid;
   place-items: center;
   color: var(--ink);
-  background: var(--paper);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line);
 }
 
 .deck-btn svg {
@@ -436,19 +441,19 @@ svg {
 }
 
 #shutter {
-  width: 76px;
-  height: 76px;
+  width: 74px;
+  height: 74px;
 }
 
 /* 손바닥을 보여 주는 동안 셔터 둘레가 시계 방향으로 차오른다 (--palm-p: 0~1, app.js) */
 #shutter::after {
   content: "";
   position: absolute;
-  inset: -13px;
+  inset: -12px;
   border-radius: 50%;
-  background: conic-gradient(var(--mint) calc(var(--palm-p, 0) * 360deg), transparent 0);
-  -webkit-mask: radial-gradient(closest-side, transparent 84%, #000 86%);
-  mask: radial-gradient(closest-side, transparent 84%, #000 86%);
+  background: conic-gradient(var(--gold) calc(var(--palm-p, 0) * 360deg), transparent 0);
+  -webkit-mask: radial-gradient(closest-side, transparent 88%, #000 90%);
+  mask: radial-gradient(closest-side, transparent 88%, #000 90%);
   pointer-events: none;
 }
 
@@ -469,9 +474,8 @@ svg {
   width: 52px;
   height: 52px;
   object-fit: cover;
-  border-radius: 12px;
-  border: 3px solid var(--paper);
-  box-shadow: 0 4px 10px var(--shade);
+  border-radius: 10px;
+  border: 2px solid var(--ink);
 }
 
 /* 업로드 표시: 올리는 중(도는 고리) · 다 올라감(체크) · 실패(느낌표, 누르면 다시) */
@@ -492,15 +496,15 @@ svg {
 
 #thumb-badge.up {
   display: block;
-  background: var(--paper);
-  border: 3px solid var(--track);
+  background: var(--bg);
+  border: 3px solid var(--line);
   border-top-color: var(--ink);
   animation: spin 0.8s linear infinite;
 }
 
 #thumb-badge.ok {
   display: grid;
-  background: var(--mint);
+  background: var(--gold);
 }
 
 #thumb-badge.ok::after {
@@ -508,14 +512,14 @@ svg {
   width: 5px;
   height: 9px;
   margin-top: -2px;
-  border: solid var(--ink);
+  border: solid var(--on-gold);
   border-width: 0 2.5px 2.5px 0;
   rotate: 45deg;
 }
 
 #thumb-badge.bad {
   display: grid;
-  color: var(--paper);
+  color: var(--ink);
   background: var(--bad);
 }
 
@@ -539,17 +543,17 @@ svg {
 .tool {
   width: 58px;
   height: 60px;
-  border-radius: 18px;
+  border-radius: 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 3px;
   font-size: 11.5px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--ink);
-  background: var(--paper);
-  box-shadow: 0 4px 12px var(--shade);
+  background: rgba(18, 13, 16, 0.8);
+  box-shadow: inset 0 0 0 1px var(--line);
 }
 
 .tool svg {
@@ -557,10 +561,11 @@ svg {
   height: 24px;
 }
 
-/* 고르는 줄이 열렸거나(스티커·배경) 켜져 있으면(손) 핑크로 */
+/* 고르는 줄이 열렸거나(스티커·배경) 켜져 있으면(손) 금빛으로 */
 .tool.on {
-  color: var(--paper);
-  background: var(--pink);
+  color: var(--on-gold);
+  background: var(--gold);
+  box-shadow: none;
 }
 
 .tool:disabled {
@@ -579,8 +584,8 @@ svg {
   overflow-x: auto;
   scrollbar-width: none;
   border-radius: 999px;
-  background: var(--paper);
-  box-shadow: 0 6px 16px var(--shade);
+  background: rgba(18, 13, 16, 0.86);
+  box-shadow: inset 0 0 0 1px var(--line);
 }
 
 #picker::-webkit-scrollbar {
@@ -592,14 +597,14 @@ svg {
   padding: 8px 14px;
   border-radius: 999px;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   white-space: nowrap;
   color: var(--ink);
-  background: var(--bg);
+  background: var(--surface-hi);
 }
 
 #picker button.on {
-  color: var(--paper);
+  color: var(--on-gold);
   background: var(--ink);
 }
 
@@ -613,7 +618,7 @@ svg {
   align-items: center;
   gap: 20px;
   padding: env(safe-area-inset-top, 0px) 16px calc(env(safe-area-inset-bottom, 0px) + 20px);
-  background: var(--bg);
+  background: var(--spotlight), var(--bg);
 }
 
 .result-print {
@@ -648,7 +653,7 @@ svg {
   max-height: calc(100% - 16px);
   transform-origin: 50% 0;
   rotate: -1.5deg;
-  box-shadow: 0 16px 32px var(--shade);
+  box-shadow: 0 20px 40px var(--shade);
 }
 
 #result-controls {
@@ -665,16 +670,15 @@ svg {
 }
 
 #colors button {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  border: 2px solid var(--paper);
-  box-shadow: 0 2px 6px var(--shade);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25), 0 0 0 1px var(--line);
 }
 
 #colors button.on {
-  outline: 3px solid var(--ink);
-  outline-offset: 2px;
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
 }
 
 /* 아이폰은 16px보다 작으면 누를 때 화면이 확대된다 */
@@ -685,10 +689,10 @@ svg {
   border-radius: 999px;
   font: inherit;
   font-size: 16px;
-  font-weight: 600;
   text-align: center;
   color: var(--ink);
-  background: var(--paper);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line);
   -webkit-user-select: text;
   user-select: text;
 }
@@ -698,7 +702,7 @@ svg {
 }
 
 #caption:focus-visible {
-  outline: 3px solid var(--ink);
+  outline: 2px solid var(--gold);
 }
 
 #result-actions {
@@ -712,14 +716,16 @@ svg {
   padding: 14px 0;
   border-radius: 999px;
   font-size: 16px;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--ink);
-  background: var(--paper);
+  background: var(--surface);
+  box-shadow: inset 0 0 0 1px var(--line);
 }
 
 #result-actions #save {
-  color: var(--paper);
-  background: var(--pink);
+  color: var(--on-gold);
+  background: var(--gold);
+  box-shadow: none;
 }
 
 #result-actions button:disabled {
@@ -745,19 +751,19 @@ svg {
   padding: 4px 10px;
   border-radius: 999px;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--ink);
-  background: var(--paper);
+  background: rgba(18, 13, 16, 0.8);
 }
 
 #grid button.current {
-  outline: 4px solid var(--pink);
-  outline-offset: -4px;
+  outline: 2px solid var(--gold);
+  outline-offset: -2px;
 }
 
 #grid button.current span {
-  color: var(--paper);
-  background: var(--pink);
+  color: var(--on-gold);
+  background: var(--gold);
 }
 
 /* ----- 효과 이름 · 카운트다운 · 번쩍임 ----- */
@@ -770,14 +776,14 @@ svg {
   padding: 7px 16px;
   border-radius: 999px;
   font-size: 15px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--ink);
-  background: var(--paper);
-  box-shadow: 0 4px 12px var(--shade);
+  background: rgba(18, 13, 16, 0.8);
+  box-shadow: inset 0 0 0 1px var(--line);
   white-space: nowrap;
 }
 
-/* 숫자도 제목처럼 스티커 글씨 */
+/* 숫자는 제목과 같은 명조 */
 #countdown {
   position: fixed;
   top: 0;
@@ -787,13 +793,11 @@ svg {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--sticker);
+  font-family: var(--serif);
   font-size: min(40vw, 240px);
-  color: var(--pink);
-  text-shadow:
-    6px 0 var(--paper), -6px 0 var(--paper), 0 6px var(--paper), 0 -6px var(--paper),
-    4px 4px var(--paper), -4px -4px var(--paper), 4px -4px var(--paper), -4px 4px var(--paper),
-    0 14px 0 var(--shade);
+  font-weight: 700;
+  color: var(--ink);
+  text-shadow: 0 6px 40px rgba(0, 0, 0, 0.6);
   pointer-events: none;
 }
 
@@ -833,6 +837,7 @@ svg {
     height: auto;
     flex-direction: row;
     padding: 0 env(safe-area-inset-right, 0px) 0 0;
+    box-shadow: inset 1px 0 0 var(--line);
   }
 
   .deck .segmented {
@@ -863,10 +868,6 @@ svg {
 
 /* ----- 마우스를 올리면 (맥처럼 마우스가 있을 때만. 아이폰·아이패드는 누른 뒤 색이 남아서 뺀다) ----- */
 
-:root {
-  --pink-deep: #ff3d8d;
-}
-
 .tool,
 .deck-btn .ring,
 .segmented button,
@@ -874,62 +875,47 @@ svg {
 #result-actions button,
 #colors button,
 #thumb-img,
-#grid button span {
+#grid button span,
+#start,
+#shutter {
   transition: background-color 0.15s, color 0.15s, transform 0.15s;
 }
 
-#start,
-#shutter {
-  transition: transform 0.15s, background-color 0.15s;
-}
-
 @media (hover: hover) and (pointer: fine) {
-  /* 흰 알약 버튼은 연보라로 */
   .tool:hover:not(:disabled):not(.on),
   .deck-btn:hover:not(:disabled) .ring,
-  #result-actions #retake:hover:not(:disabled) {
-    background: var(--track);
+  #result-actions #retake:hover:not(:disabled),
+  #picker button:hover:not(.on) {
+    background: var(--surface-hi);
   }
 
-  /* 핑크 버튼은 더 진한 핑크로 */
   .tool.on:hover:not(:disabled),
   #result-actions #save:hover:not(:disabled) {
-    background: var(--pink-deep);
+    background: var(--gold-hi);
   }
 
-  /* 셔터는 살짝 커지면서 진해진다 */
+  /* 셔터는 살짝 커지면서 밝아진다 */
   #start:hover:not(:disabled),
   #shutter:hover:not(:disabled) {
-    background: var(--pink-deep);
-    transform: scale(1.06);
+    background: var(--gold-hi);
+    transform: scale(1.05);
   }
 
   .segmented button:hover:not(.on):not(:disabled) {
     color: var(--ink);
-    background: rgba(255, 255, 255, 0.7);
-  }
-
-  #picker button:hover:not(.on) {
-    background: var(--track);
   }
 
   #colors button:hover:not(.on) {
     transform: scale(1.15);
   }
 
-  /* 방금 찍은 사진은 붙인 스티커처럼 살짝 기운다 */
   #thumb.has-photo:hover #thumb-img {
-    transform: rotate(-6deg) scale(1.06);
+    transform: rotate(-5deg) scale(1.05);
   }
 
   #grid button:hover:not(.current) {
-    outline: 4px solid var(--paper);
-    outline-offset: -4px;
-  }
-
-  #grid button:hover:not(.current) span {
-    color: var(--paper);
-    background: var(--ink);
+    outline: 2px solid var(--ink);
+    outline-offset: -2px;
   }
 }
 

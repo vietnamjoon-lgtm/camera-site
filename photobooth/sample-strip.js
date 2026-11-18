@@ -45,7 +45,7 @@ function frame({ bg, sticker, tilt, bob = 0 }, w = W, h = H) {
   ctx.translate(cx, cy);
   ctx.rotate(tilt);
   ctx.translate(-cx, -cy);
-  ctx.fillStyle = "#2b1640"; // 실루엣은 글씨와 같은 자두색 (style.css --ink)
+  ctx.fillStyle = "#241a1f"; // 실루엣은 바탕과 어울리는 짙은 와인색
   ctx.beginPath();
   ctx.ellipse(300, 240, 84, 104, 0, 0, Math.PI * 2);
   ctx.fill();
