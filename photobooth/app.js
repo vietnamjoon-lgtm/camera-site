@@ -375,7 +375,7 @@ async function upload(blob, filename) {
   const ok = await saveRecording(blob, filename, () => {}, { download: false });
   badge.className = ok ? "ok" : "bad";
   badge.textContent = ok ? "" : "!";
-  $("thumb").setAttribute("aria-label", ok ? "방금 찍은 사진 (드라이브에 저장됨)" : "저장 실패. 누르면 다시 보내요");
+  $("thumb").setAttribute("aria-label", ok ? "방금 찍은 사진 (저장됨)" : "저장 실패. 누르면 다시 보내요");
   // 실패했으면 썸네일을 눌러서 다시 보낸다
   $("thumb").onclick = ok ? null : () => upload(blob, filename);
 }
