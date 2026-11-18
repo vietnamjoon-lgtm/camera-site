@@ -21,13 +21,14 @@
   <div id="countdown" class="hidden"></div>
   <div id="flash"></div>
 
-  <!-- 입장 화면: 부스 구멍에서 나오는 견본(한 장은 폴라로이드, 네 컷은 네 컷) + 카메라 안과 같은 모드 전환·셔터 -->
+  <!-- 입장 화면: 부스 구멍에서 나오는 견본(한 장은 폴라로이드, 네 컷은 네 컷, 움짤은 움직이는 사진) + 카메라 안과 같은 모드 전환·셔터 -->
   <div id="start-screen">
     <div class="booth">
       <figure class="print">
         <div class="slot" aria-hidden="true"></div>
         <div class="paper">
           <img id="sample-polaroid" class="sheet hidden" alt="견본 폴라로이드: 분홍 배경에 강아지 귀" />
+          <canvas id="sample-gif" class="sheet hidden" role="img" aria-label="견본 움짤: 무지개 앞에서 토끼 귀를 하고 고개를 까딱이는 모습"></canvas>
           <img id="sample-strip" class="sheet hidden" alt="견본 네 컷: 바다에 하트 볼, 노을에 고양이 귀, 분홍 배경에 토끼 귀, 무지개에 왕관" />
         </div>
       </figure>

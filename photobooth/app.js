@@ -13,7 +13,7 @@ import { STICKERS, drawSticker } from "./stickers.js";
 import { BACKGROUNDS, paintBackground, loadPhoto } from "./backgrounds.js";
 import { recordFrames, encodeBoomerang } from "./boomerang.js";
 import { createFaceTracker, createSegmenter } from "./vision.js";
-import { makeSampleStrip, makeSamplePolaroid } from "./sample-strip.js";
+import { makeSampleStrip, makeSamplePolaroid, makeSampleGifFrames, GIF_FRAME_MS } from "./sample-strip.js";
 import { recordContinuously, saveRecording, timestampName } from "../recording.js";
 
 const $ = (id) => document.getElementById(id);
@@ -525,7 +525,7 @@ function pickStartMode(m) {
   mode = m;
   for (const b of $("start-modes").children) b.classList.toggle("on", b.dataset.mode === m);
   $("start-hint").textContent = MODE_HINTS[m];
-  showSheet(m === "single" ? $("sample-polaroid") : $("sample-strip"));
+  showSheet($({ single: "sample-polaroid", four: "sample-strip", boomerang: "sample-gif" }[m]));
 }
 
 // 견본 사진은 기계 구멍에서 끊어 끊어 밀려 나오고, 모드를 바꾸면 쏙 들어간 뒤 다른 게 나온다
@@ -550,13 +550,35 @@ async function showSheet(next) {
   prev?.classList.add("hidden");
   prev?.getAnimations().forEach((a) => a.cancel());
   next.getAnimations().forEach((a) => a.cancel()); // 바꾸다 만 들어가기 움직임이 남아 있으면 지운다
-  next.parentElement.classList.toggle("short", next.id === "sample-polaroid");
+  next.parentElement.dataset.sheet = next.id;
   next.classList.remove("hidden");
   if (!calm) next.animate(FEED, { duration: 1500, fill: "backwards" });
 }
 
 $("sample-strip").src = makeSampleStrip().toDataURL("image/jpeg", 0.9);
 $("sample-polaroid").src = makeSamplePolaroid().toDataURL("image/jpeg", 0.9);
+
+// 움짤 견본은 앞으로 → 뒤로 계속 돌린다 (카메라가 켜지면 멈춘다)
+function playSampleGif() {
+  const frames = makeSampleGifFrames();
+  const order = [...frames, ...frames.slice(1, -1).reverse()];
+  const el = $("sample-gif");
+  el.width = frames[0].width;
+  el.height = frames[0].height;
+  const ctx = el.getContext("2d");
+  const started = performance.now();
+  let shown = -1;
+  (function step(now) {
+    if ($("start-screen").classList.contains("hidden")) return;
+    const i = Math.floor(Math.max(0, now - started) / GIF_FRAME_MS) % order.length; // 첫 rAF 시각이 시작보다 살짝 이를 수 있다
+    if (i !== shown && !(calm && shown >= 0)) {
+      ctx.drawImage(order[i], 0, 0);
+      shown = i;
+    }
+    requestAnimationFrame(step);
+  })(started);
+}
+playSampleGif();
 pickStartMode(mode);
 
 // 견본은 기계에 매달린 종이. 커서(손가락)가 근처를 스치면 그 방향으로 바람을 맞은 것처럼
@@ -567,7 +589,7 @@ const REACH = 280; // 이 거리(px) 안을 지나가야 바람이 닿는다
 function swingStrip() {
   if (calm) return;
   const screen = $("start-screen");
-  const sheets = [$("sample-strip"), $("sample-polaroid")];
+  const sheets = [$("sample-strip"), $("sample-polaroid"), $("sample-gif")];
   let angle = 0; // 좌우로 흔들림 (deg)
   let speed = 0;
   let flutter = 0; // 종이가 살짝 비틀리는 것 (deg)

@@ -93,6 +93,7 @@ button {
   --strip-h: min(54vh, 560px);
   --strip-w: calc(var(--strip-h) * 0.327);
   --pol-w: min(78vw, calc(var(--strip-h) * 0.72));
+  --gif-w: calc(var(--pol-w) * 0.8);
 }
 
 /* 걸려 있는 견본 높이만큼 자리를 잡는다. 바꿀 때 아래 글씨가 부드럽게 따라 움직인다 */
@@ -127,9 +128,18 @@ button {
   --w: var(--pol-w);
 }
 
-/* 폴라로이드는 1200×1400 */
-.paper.short {
+#sample-gif {
+  --w: var(--gif-w);
+  height: auto;
+}
+
+/* 걸린 견본에 맞춘 높이 (폴라로이드 1200×1400, 움짤 490×640) */
+.paper[data-sheet="sample-polaroid"] {
   height: calc(var(--pol-w) * 7 / 6);
+}
+
+.paper[data-sheet="sample-gif"] {
+  height: calc(var(--gif-w) * 640 / 490);
 }
 
 .intro {
