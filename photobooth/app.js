@@ -166,7 +166,7 @@ let palmArmed = true; // 한 번 찍으면 손을 내렸다가 다시 들어야 
 let lastHand = 0;
 
 function setPalmProgress(p) {
-  $("shutter").style.setProperty("--palm", p);
+  $("shutter").style.setProperty("--palm-p", p);
 }
 
 let palmReaderLoad = null;
@@ -230,15 +230,13 @@ async function chooseBackground(id) {
 
 // ---------- 격자 ----------
 
-// 격자 칸 위치 (CSS px). 아래 막대 위쪽 공간을 3×3으로 나눈다.
+// 격자 칸 위치 (CSS px). 카메라 화면(받침 위쪽)을 3×3으로 나눈다.
 function cellRects() {
-  const top = 0;
-  const bottom = $("grid-bar").getBoundingClientRect().top;
   const w = (canvas.clientWidth - GAP * 2) / 3;
-  const h = (bottom - top - GAP * 2) / 3;
+  const h = (canvas.clientHeight - GAP * 2) / 3;
   return Array.from({ length: PAGE_SIZE }, (_, i) => ({
     left: (i % 3) * (w + GAP),
-    top: top + Math.floor(i / 3) * (h + GAP),
+    top: Math.floor(i / 3) * (h + GAP),
     width: w,
     height: h,
   }));
@@ -255,7 +253,9 @@ function layoutGrid() {
     ...pageEffects().map((fx, i) => {
       const b = document.createElement("button");
       b.type = "button";
-      b.textContent = fx.name;
+      const name = document.createElement("span");
+      name.textContent = fx.name;
+      b.append(name);
       b.classList.toggle("current", fx.id === current);
       Object.assign(b.style, {
         left: `${rects[i].left}px`,
@@ -370,9 +370,12 @@ const toJpeg = (c) => new Promise((r) => c.toBlob(r, "image/jpeg", 0.92));
 
 async function upload(blob, filename) {
   const badge = $("thumb-badge");
-  badge.textContent = "⬆️";
+  badge.className = "up";
+  badge.textContent = "";
   const ok = await saveRecording(blob, filename, () => {}, { download: false });
-  badge.textContent = ok ? "✅" : "⚠️";
+  badge.className = ok ? "ok" : "bad";
+  badge.textContent = ok ? "" : "!";
+  $("thumb").setAttribute("aria-label", ok ? "방금 찍은 사진 (드라이브에 저장됨)" : "저장 실패. 누르면 다시 보내요");
   // 실패했으면 썸네일을 눌러서 다시 보낸다
   $("thumb").onclick = ok ? null : () => upload(blob, filename);
 }
@@ -541,6 +544,8 @@ function openResult(kind, shots, stamp) {
   showCameraUI(false);
   $("result").classList.remove("hidden");
   renderResult();
+  // 찍은 사진이 기계 구멍에서 끊어 끊어 뽑혀 나온다 (입장 화면과 같은 움직임)
+  if (!calm) $("result-img").animate(FEED, { duration: 1500, fill: "backwards" });
 }
 
 function closeResult() {

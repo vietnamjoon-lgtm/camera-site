@@ -35,12 +35,24 @@ button {
   pointer-events: none;
 }
 
+/* 카메라 아래(가로로 든 폰은 오른쪽)에 검은 받침을 깔고, 카메라 화면은 나머지만 쓴다.
+   그래서 화면에 보이는 그대로가 사진에 찍힌다 */
+:root {
+  --deck-b: calc(168px + env(safe-area-inset-bottom, 0px));
+  --deck-r: 0px;
+  --panel: #1c1c1e; /* 받침 위 버튼 바탕 */
+  --palm: #ffd60a; /* 손 인식 링 */
+}
+
 #view,
 #overlay {
   position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  top: 0;
+  left: 0;
+  right: var(--deck-r);
+  bottom: var(--deck-b);
+  width: calc(100% - var(--deck-r));
+  height: calc(100% - var(--deck-b));
   display: block;
 }
 
@@ -294,56 +306,84 @@ button {
   }
 }
 
-/* ----- 아래 막대 (효과 · 셔터 · 방금 찍은 사진) ----- */
+/* ----- 아래 받침 (찍는 방식 · 효과 · 셔터 · 방금 찍은 사진) ----- */
 
-#bar,
-#grid-bar {
+.deck {
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px max(24px, env(safe-area-inset-left, 0px)) calc(env(safe-area-inset-bottom, 0px) + 20px);
-  background: linear-gradient(transparent, rgba(0, 0, 0, 0.55));
-}
-
-/* 넓은 화면에서도 버튼은 가운데 560px 안에 모은다 (어두운 띠는 화면 끝까지) */
-#bar {
-  padding-left: max(24px, calc((100% - 560px) / 2));
-  padding-right: max(24px, calc((100% - 560px) / 2));
-}
-
-.side {
-  width: 60px;
-  height: 60px;
-  border-radius: 16px;
+  height: var(--deck-b);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 16px;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: #000;
+}
+
+.deck-row {
+  width: min(420px, 100% - 48px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#grid-bar .deck-row {
+  justify-content: center;
+  gap: 36px;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.deck-btn {
+  width: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
   font-size: 12px;
   font-weight: 600;
-  background: rgba(30, 30, 32, 0.72);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  backdrop-filter: saturate(180%) blur(20px);
+  color: rgba(255, 255, 255, 0.8);
 }
 
-.side .icon {
-  font-size: 22px;
-  line-height: 1;
+.deck-btn .ring {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: var(--panel);
 }
 
+.deck-btn svg {
+  width: 24px;
+  height: 24px;
+}
+
+.deck-btn:disabled {
+  opacity: 0.4;
+}
+
+/* 입장 화면의 시작 셔터와 같은 모양 */
 #shutter {
   position: relative;
   width: 76px;
   height: 76px;
   border-radius: 50%;
   border: 5px solid #fff;
-  background: rgba(255, 255, 255, 0.25);
+  background: #fff;
+  box-shadow: inset 0 0 0 4px #000;
   transition: transform 0.1s;
 }
 
@@ -353,7 +393,7 @@ button {
   position: absolute;
   inset: -11px;
   border-radius: 50%;
-  background: conic-gradient(#ffd60a calc(var(--palm, 0) * 360deg), transparent 0);
+  background: conic-gradient(var(--palm) calc(var(--palm-p, 0) * 360deg), transparent 0);
   -webkit-mask: radial-gradient(closest-side, transparent 84%, #000 86%);
   mask: radial-gradient(closest-side, transparent 84%, #000 86%);
   pointer-events: none;
@@ -369,8 +409,11 @@ button {
 
 #thumb {
   position: relative;
+  width: 64px;
+  height: 56px;
   padding: 0;
-  overflow: visible;
+  display: grid;
+  place-items: center;
 }
 
 #thumb:not(.has-photo) {
@@ -378,51 +421,73 @@ button {
 }
 
 #thumb-img {
-  width: 100%;
-  height: 100%;
+  width: 52px;
+  height: 52px;
   object-fit: cover;
-  border-radius: 16px;
+  border-radius: 12px;
   border: 2px solid #fff;
 }
 
+/* 업로드 표시: 올리는 중(도는 고리) · 다 올라감(체크) · 실패(느낌표, 누르면 다시) */
 #thumb-badge {
   position: absolute;
-  right: -6px;
-  bottom: -6px;
-  font-size: 18px;
+  right: 0;
+  bottom: -4px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: none;
+  place-items: center;
+  border: 2px solid #000;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1;
 }
 
-#grid-bar {
-  justify-content: center;
-  gap: 28px;
-  font-size: 17px;
-  font-weight: 600;
+#thumb-badge.up {
+  display: block;
+  background: #000;
+  border: 3px solid rgba(255, 255, 255, 0.25);
+  border-top-color: #fff;
+  animation: spin 0.8s linear infinite;
 }
 
-#grid-bar .side {
-  font-size: 30px;
+#thumb-badge.ok {
+  display: grid;
+  background: #fff;
 }
 
-/* ----- 한 장 / 네 컷 전환 (셔터 바로 위) ----- */
+#thumb-badge.ok::after {
+  content: "";
+  width: 5px;
+  height: 9px;
+  margin-top: -2px;
+  border: solid #000;
+  border-width: 0 2.5px 2.5px 0;
+  rotate: 45deg;
+}
 
-#mode,
+#thumb-badge.bad {
+  display: grid;
+  color: #fff;
+  background: #ff453a;
+}
+
+@keyframes spin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+/* ----- 모양 전환 (입장 화면 · 받침 · 결과 화면이 같이 쓴다) ----- */
+
 .segmented {
   display: flex;
   padding: 3px;
   border-radius: 999px;
-  background: rgba(30, 30, 32, 0.72);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  backdrop-filter: saturate(180%) blur(20px);
+  background: var(--panel);
 }
 
-#mode {
-  position: fixed;
-  left: 50%;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 124px);
-  transform: translateX(-50%);
-}
-
-#mode button,
 .segmented button {
   padding: 7px 16px;
   border-radius: 999px;
@@ -432,17 +497,25 @@ button {
   white-space: nowrap;
 }
 
-#mode button.on,
 .segmented button.on {
-  color: #1d1d1f;
+  color: #000;
   background: #fff;
 }
 
-#mode button:disabled {
+.segmented button:disabled {
   opacity: 0.5;
 }
 
-/* ----- 스티커 · 배경 (오른쪽 위 버튼, 셔터 위 고르는 줄) ----- */
+.segmented button:focus-visible,
+.deck-btn:focus-visible .ring,
+.tool:focus-visible,
+#shutter:focus-visible,
+#result-actions button:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}
+
+/* ----- 오른쪽 위 도구 (스티커 · 배경 · 손), 받침 위 고르는 줄 ----- */
 
 #overlay {
   pointer-events: none;
@@ -451,42 +524,55 @@ button {
 #tools {
   position: fixed;
   top: calc(env(safe-area-inset-top, 0px) + 16px);
-  right: max(16px, env(safe-area-inset-right, 0px));
+  right: calc(var(--deck-r) + 16px);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
-#tools .side.on {
-  outline: 3px solid var(--blue);
-  outline-offset: 2px;
+.tool {
+  width: 58px;
+  height: 60px;
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.78);
 }
 
-#tools .side:disabled {
+.tool svg {
+  width: 24px;
+  height: 24px;
+}
+
+/* 고르는 줄이 열렸거나(스티커·배경) 켜져 있으면(손) 흰 바탕으로 뒤집는다 */
+.tool.on {
+  color: #000;
+  background: #fff;
+}
+
+.tool:disabled {
   opacity: 0.4;
-}
-
-/* 손으로 찍기는 고르는 줄이 아니라 켜고 끄는 버튼 */
-#tools #hand-btn.on {
-  outline: none;
-  background: var(--blue);
 }
 
 #picker {
   position: fixed;
-  left: 50%;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 172px);
+  left: calc((100% - var(--deck-r)) / 2);
+  bottom: calc(var(--deck-b) + 12px);
   transform: translateX(-50%);
-  max-width: calc(100% - 32px);
+  max-width: calc(100% - var(--deck-r) - 32px);
   display: flex;
   gap: 6px;
   padding: 5px;
   overflow-x: auto;
   scrollbar-width: none;
   border-radius: 999px;
-  background: rgba(30, 30, 32, 0.72);
-  -webkit-backdrop-filter: saturate(180%) blur(20px);
-  backdrop-filter: saturate(180%) blur(20px);
+  background: rgba(0, 0, 0, 0.78);
 }
 
 #picker::-webkit-scrollbar {
@@ -500,15 +586,15 @@ button {
   font-size: 14px;
   font-weight: 600;
   white-space: nowrap;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.16);
 }
 
 #picker button.on {
-  color: #1d1d1f;
+  color: #000;
   background: #fff;
 }
 
-/* ----- 네 컷 결과 화면 ----- */
+/* ----- 결과 화면: 사진이 위쪽 기계 구멍에서 뽑혀 나와 걸린다 (나오는 움직임은 app.js) ----- */
 
 #result {
   position: fixed;
@@ -516,18 +602,43 @@ button {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  padding: calc(env(safe-area-inset-top, 0px) + 16px) 16px calc(env(safe-area-inset-bottom, 0px) + 20px);
-  background: rgba(0, 0, 0, 0.92);
+  gap: 20px;
+  padding: env(safe-area-inset-top, 0px) 16px calc(env(safe-area-inset-bottom, 0px) + 20px);
+  background: #000;
+}
+
+.result-print {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#result .slot {
+  width: min(86vw, 520px);
+}
+
+/* 사진 크기를 이 칸에 맞추려고 안에서 절대 위치로 둔다 */
+.result-paper {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  margin-top: -6px;
+  clip-path: inset(0 -50vw -50vh -50vw);
 }
 
 #result-img {
-  flex: 1;
-  min-height: 0;
-  max-width: 100%;
-  object-fit: contain;
-  border-radius: 6px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  max-width: calc(100% - 24px);
+  max-height: calc(100% - 8px);
+  transform-origin: 50% 0;
+  rotate: -1.5deg;
 }
 
 #result-controls {
@@ -535,6 +646,7 @@ button {
   flex-direction: column;
   align-items: center;
   gap: 14px;
+  width: 100%;
 }
 
 #colors {
@@ -543,52 +655,58 @@ button {
 }
 
 #colors button {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.35);
+  border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
 #colors button.on {
-  outline: 3px solid var(--blue);
-  outline-offset: 2px;
+  outline: 2px solid #fff;
+  outline-offset: 3px;
 }
 
 /* 아이폰은 16px보다 작으면 누를 때 화면이 확대된다 */
 #caption {
   width: min(320px, 100%);
-  padding: 10px 16px;
+  padding: 11px 16px;
   border: 0;
   border-radius: 999px;
   font: inherit;
   font-size: 16px;
   text-align: center;
   color: #fff;
-  background: rgba(255, 255, 255, 0.16);
+  background: var(--panel);
   -webkit-user-select: text;
   user-select: text;
 }
 
 #caption::placeholder {
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.45);
+}
+
+#caption:focus-visible {
+  outline: 2px solid #fff;
 }
 
 #result-actions {
   display: flex;
-  gap: 12px;
+  gap: 10px;
+  width: min(320px, 100%);
 }
 
 #result-actions button {
-  min-width: 120px;
-  padding: 12px 24px;
+  flex: 1;
+  padding: 14px 0;
   border-radius: 999px;
   font-size: 16px;
-  font-weight: 600;
-  background: rgba(255, 255, 255, 0.16);
+  font-weight: 700;
+  background: var(--panel);
 }
 
 #result-actions #save {
-  background: var(--blue);
+  color: #000;
+  background: #fff;
 }
 
 #result-actions button:disabled {
@@ -608,14 +726,24 @@ button {
   align-items: flex-end;
   justify-content: center;
   padding-bottom: 8px;
-  font-size: 14px;
+}
+
+#grid button span {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 13px;
   font-weight: 600;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.6);
 }
 
 #grid button.current {
-  outline: 3px solid var(--blue);
+  outline: 3px solid #fff;
   outline-offset: -3px;
+}
+
+#grid button.current span {
+  color: #000;
+  background: #fff;
 }
 
 /* ----- 효과 이름 · 카운트다운 · 번쩍임 ----- */
@@ -623,25 +751,28 @@ button {
 #label {
   position: fixed;
   top: calc(env(safe-area-inset-top, 0px) + 16px);
-  left: 50%;
+  left: calc((100% - var(--deck-r)) / 2);
   transform: translateX(-50%);
-  padding: 6px 16px;
+  padding: 7px 16px;
   border-radius: 999px;
   font-size: 15px;
   font-weight: 600;
-  background: rgba(30, 30, 32, 0.72);
+  background: rgba(0, 0, 0, 0.6);
   white-space: nowrap;
 }
 
 #countdown {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: var(--deck-r);
+  bottom: var(--deck-b);
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--display);
   font-size: min(40vw, 240px);
-  font-weight: 700;
+  font-weight: 800;
   text-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
   pointer-events: none;
 }
@@ -664,5 +795,54 @@ button {
   }
   to {
     opacity: 0;
+  }
+}
+
+/* ----- 가로로 든 폰처럼 키가 작은 화면: 받침을 오른쪽 세로로 ----- */
+
+@media (max-height: 500px) and (min-aspect-ratio: 1/1) {
+  :root {
+    --deck-b: 0px;
+    --deck-r: calc(208px + env(safe-area-inset-right, 0px));
+  }
+
+  .deck {
+    left: auto;
+    top: 0;
+    width: var(--deck-r);
+    height: auto;
+    flex-direction: row;
+    padding: 0 env(safe-area-inset-right, 0px) 0 0;
+  }
+
+  .deck .segmented {
+    flex-direction: column;
+  }
+
+  .deck-row,
+  #grid-bar .deck-row {
+    width: auto;
+    height: min(320px, 100% - 32px);
+    flex-direction: column;
+  }
+
+  #grid-bar .deck-row {
+    gap: 24px;
+  }
+
+  #result {
+    flex-direction: row;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  #result-controls {
+    width: min(340px, 45%);
+    align-self: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #thumb-badge.up {
+    animation: none;
   }
 }
