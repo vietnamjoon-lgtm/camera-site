@@ -84,9 +84,11 @@ function showCameraUI(show) {
   if (!show) setPicker(null);
 }
 
-// 모드마다 조명·금속 색이 다르다 (한 장 금빛, 네 컷 은빛, 움짤 로즈골드 — style.css)
+// 모드마다 사진관 분위기가 다르다 (한 장 금빛 갈색, 네 컷 은빛 검정, 움짤 보랏빛 로즈골드 — style.css)
+const THEME_BG = { single: "#1b130c", four: "#120d10", boomerang: "#170f22" };
 function setTheme(m) {
   document.documentElement.dataset.theme = m;
+  document.querySelector('meta[name="theme-color"]').content = THEME_BG[m]; // 폰 위쪽 상태 표시줄 색
 }
 
 function setMode(m) {

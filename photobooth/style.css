@@ -1,13 +1,16 @@
-/* 찰칵 부스: 벨벳 커튼 사진관. 와인빛 검정 바탕, 차가운 흰 글씨, 은빛 포인트.
-   제목은 명조(고운바탕), 나머지는 기본 글꼴로 조용하게. 꾸밈은 사진 나오는 구멍 위 조명 하나만 */
+/* 찰칵 부스: 모드마다 다른 사진관. 고른 모드에 따라 바탕 · 글씨 · 조명 · 금속 · 제목 글꼴이 바뀐다.
+   한 장: 금빛 조명 아래 따뜻한 갈색 옛 사진관 (명조 제목)
+   네 컷: 와인빛 검정 벨벳에 은빛 사진 부스 (굵은 간판 글씨) — 기본
+   움짤: 보랏빛 밤에 장밋빛 네온 (둥근 글씨)
+   꾸밈은 사진 나오는 구멍 위 조명 하나만 */
 
 :root {
   --bg: #120d10; /* 와인빛 검정 바탕 */
   --surface: #1e171b; /* 버튼 · 알약 바탕 */
   --surface-hi: #2a2125; /* 마우스 올렸을 때 */
-  --line: rgba(236, 235, 240, 0.12); /* 얇은 테두리 */
+  --line: color-mix(in srgb, var(--ink) 12%, transparent); /* 얇은 테두리 */
   --ink: #ecebf0; /* 은색과 어울리는 차가운 흰 글씨 */
-  --ink-dim: rgba(236, 235, 240, 0.58);
+  --ink-dim: color-mix(in srgb, var(--ink) 58%, transparent);
   /* 금속 색은 모드 테마(아래)에 따라 은 · 금 · 로즈골드로 바뀐다 */
   --silver: #c8ccd4; /* 셔터 · 저장 · 고른 것 (테두리·링 같은 선) */
   --tint: #ecebf0; /* 고른 모드 알약 */
@@ -25,8 +28,12 @@
   --shade: rgba(0, 0, 0, 0.55); /* 걸린 사진 그림자 */
   /* 매달린 인화지 그림자: 종이에 바짝 붙은 진한 그림자 + 멀리 퍼지는 옅은 그림자 */
   --paper-shadow: 0 1px 1.5px rgba(0, 0, 0, 0.45), 0 6px 12px rgba(0, 0, 0, 0.35), 0 22px 44px var(--shade);
-  --serif: "Gowun Batang", "Apple SD Gothic Neo", serif;
+  /* 제목 · 숫자 글꼴 */
+  --display: "Black Han Sans", "Apple SD Gothic Neo", sans-serif;
+  --display-weight: 400;
+  --display-track: 0.02em;
   /* 사진 나오는 구멍 위에서 비추는 은은한 조명 */
+  --glow: rgba(214, 220, 232, 0.12);
   --spotlight: radial-gradient(ellipse 70% 55% at 50% 0%, var(--glow), transparent 70%);
 
   /* 카메라 아래(가로로 든 폰은 오른쪽)에 받침을 깔고, 카메라 화면은 나머지만 쓴다.
@@ -35,35 +42,54 @@
   --deck-r: 0px;
 
   /* 모드를 바꾸면 조명과 금속 색이 스르륵 바뀐다 */
-  transition: --m1 0.5s, --m2 0.5s, --m3 0.5s, --m4 0.5s, --glow 0.5s, --silver 0.5s, --tint 0.5s;
+  transition: --bg 0.5s, --surface 0.5s, --surface-hi 0.5s, --ink 0.5s, --m1 0.5s, --m2 0.5s, --m3 0.5s, --m4 0.5s,
+    --glow 0.5s, --silver 0.5s, --tint 0.5s;
 }
 
 /* 모드 테마: 네 컷은 은빛 사진 부스(기본), 한 장은 금빛 폴라로이드, 움짤은 로즈골드.
    색이 부드럽게 바뀌도록 색 변수로 등록해 둔다 */
+@property --bg { syntax: "<color>"; inherits: true; initial-value: #120d10; }
+@property --surface { syntax: "<color>"; inherits: true; initial-value: #1e171b; }
+@property --surface-hi { syntax: "<color>"; inherits: true; initial-value: #2a2125; }
+@property --ink { syntax: "<color>"; inherits: true; initial-value: #ecebf0; }
 @property --m1 { syntax: "<color>"; inherits: true; initial-value: #eef0f4; }
 @property --m2 { syntax: "<color>"; inherits: true; initial-value: #b9bec8; }
 @property --m3 { syntax: "<color>"; inherits: true; initial-value: #d9dce2; }
 @property --m4 { syntax: "<color>"; inherits: true; initial-value: #a9aeb8; }
-@property --glow { syntax: "<color>"; inherits: true; initial-value: rgba(214, 220, 232, 0.1); }
+@property --glow { syntax: "<color>"; inherits: true; initial-value: rgba(214, 220, 232, 0.12); }
 @property --silver { syntax: "<color>"; inherits: true; initial-value: #c8ccd4; }
 @property --tint { syntax: "<color>"; inherits: true; initial-value: #ecebf0; }
 
 :root[data-theme="single"] {
+  --bg: #1b130c;
+  --surface: #2b2016;
+  --surface-hi: #3a2c1f;
+  --ink: #f4e9d4;
+  --display: "Gowun Batang", "Apple SD Gothic Neo", serif;
+  --display-weight: 700;
+  --display-track: 0.04em;
   --m1: #fbeecb;
   --m2: #c9a15a;
   --m3: #ebd39b;
   --m4: #ad8642;
-  --glow: rgba(236, 190, 110, 0.15);
+  --glow: rgba(240, 186, 100, 0.24);
   --silver: #d9b46c;
   --tint: #f4e4bf;
 }
 
 :root[data-theme="boomerang"] {
+  --bg: #170f22;
+  --surface: #261a36;
+  --surface-hi: #33244a;
+  --ink: #f8e9f1;
+  --display: "Jua", "Apple SD Gothic Neo", sans-serif;
+  --display-weight: 400;
+  --display-track: 0.02em;
   --m1: #fbe2dd;
   --m2: #c98884;
   --m3: #eec3bc;
   --m4: #ad6e6b;
-  --glow: rgba(238, 150, 150, 0.15);
+  --glow: rgba(255, 120, 175, 0.26);
   --silver: #dda39c;
   --tint: #f6d8d3;
 }
@@ -292,11 +318,11 @@ svg {
 
 .intro h1 {
   margin: 0;
-  font-family: var(--serif);
+  font-family: var(--display);
   font-size: 42px;
-  font-weight: 700;
+  font-weight: var(--display-weight);
   line-height: 1.15;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--display-track);
   color: var(--ink);
 }
 
@@ -449,9 +475,9 @@ svg {
 #grid-bar .deck-row {
   justify-content: center;
   gap: 36px;
-  font-family: var(--serif);
+  font-family: var(--display);
   font-size: 18px;
-  font-weight: 700;
+  font-weight: var(--display-weight);
   letter-spacing: 0.06em;
 }
 
@@ -598,7 +624,7 @@ svg {
   font-size: 11.5px;
   font-weight: 600;
   color: var(--ink);
-  background: rgba(18, 13, 16, 0.8);
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
   box-shadow: inset 0 0 0 1px var(--line);
 }
 
@@ -630,7 +656,7 @@ svg {
   overflow-x: auto;
   scrollbar-width: none;
   border-radius: 999px;
-  background: rgba(18, 13, 16, 0.86);
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
   box-shadow: inset 0 0 0 1px var(--line);
 }
 
@@ -800,7 +826,7 @@ svg {
   font-size: 13px;
   font-weight: 600;
   color: var(--ink);
-  background: rgba(18, 13, 16, 0.8);
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
 }
 
 #grid button.current {
@@ -825,7 +851,7 @@ svg {
   font-size: 15px;
   font-weight: 600;
   color: var(--ink);
-  background: rgba(18, 13, 16, 0.8);
+  background: color-mix(in srgb, var(--bg) 80%, transparent);
   box-shadow: inset 0 0 0 1px var(--line);
   white-space: nowrap;
 }
@@ -840,9 +866,9 @@ svg {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--serif);
+  font-family: var(--display);
   font-size: min(40vw, 240px);
-  font-weight: 700;
+  font-weight: var(--display-weight);
   color: var(--ink);
   text-shadow: 0 6px 40px rgba(0, 0, 0, 0.6);
   pointer-events: none;
