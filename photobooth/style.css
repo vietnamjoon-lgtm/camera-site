@@ -713,7 +713,7 @@ svg {
 
 #colors {
   display: flex;
-  gap: 12px;
+  gap: 10px;
 }
 
 #colors button {

@@ -7,8 +7,12 @@ export const LAYOUTS = [
 ];
 
 // ink: 프레임 위 글자색 (프레임 색에 따라 잘 보이는 색)
+// foil: 금속 박 프레임 (비스듬히 빛이 지나가는 색 네 개). 모드 테마 색과 같다
 export const FRAME_COLORS = [
   { id: "white", name: "흰색", bg: "#ffffff", ink: "#1d1d1f" },
+  { id: "gold", name: "골드", bg: "#e6cf98", foil: ["#f6e6b8", "#cfae6a", "#efdcaa", "#b8924f"], ink: "#4a3510" },
+  { id: "silver", name: "실버", bg: "#d9dce2", foil: ["#f2f3f6", "#c3c7cf", "#e3e5ea", "#adb2bc"], ink: "#26282e" },
+  { id: "rose", name: "로즈골드", bg: "#ecc4bd", foil: ["#f9e0da", "#d6a29b", "#f1cfc8", "#c08a84"], ink: "#5a2a2a" },
   { id: "black", name: "검정", bg: "#111111", ink: "#ffffff" },
   { id: "pink", name: "핑크", bg: "#ffb6cf", ink: "#5a1030" },
   { id: "sky", name: "하늘", bg: "#a8dcff", ink: "#0b3a5c" },
@@ -29,6 +33,23 @@ export function drawCover(ctx, img, x, y, w, h) {
   ctx.drawImage(img, (img.width - sw) / 2, (img.height - sh) / 2, sw, sh, x, y, w, h);
 }
 
+// 프레임 바탕 칠하기 (금속 박이면 왼쪽 위에서 오른쪽 아래로 빛이 비껴간다)
+export function fillFrame(ctx, C, w, h) {
+  if (C.foil) {
+    const g = ctx.createLinearGradient(0, 0, w, h);
+    C.foil.forEach((c, i) => g.addColorStop([0, 0.48, 0.72, 1][i], c));
+    ctx.fillStyle = g;
+  } else {
+    ctx.fillStyle = C.bg;
+  }
+  ctx.fillRect(0, 0, w, h);
+}
+
+// 고르는 동그라미에 칠할 색
+export function swatch(C) {
+  return C.foil ? `linear-gradient(150deg, ${C.foil.join(", ")})` : C.bg;
+}
+
 export function dateText(d) {
   const p = (n) => String(n).padStart(2, "0");
   return `${d.getFullYear()}.${p(d.getMonth() + 1)}.${p(d.getDate())}`;
@@ -43,8 +64,7 @@ export function composeFourCut(images, layoutId, colorId, caption = "찰칵 부�
   canvas.height = PAD + L.rows * L.cellH + (L.rows - 1) * GAP + FOOTER;
   const ctx = canvas.getContext("2d");
 
-  ctx.fillStyle = C.bg;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  fillFrame(ctx, C, canvas.width, canvas.height);
 
   images.forEach((img, i) => {
     const col = i % L.cols;

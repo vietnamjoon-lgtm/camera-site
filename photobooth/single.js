@@ -1,6 +1,6 @@
 // 한 장 꾸미기. 폴라로이드(정사각형 사진 + 아래 넓은 여백에 날짜·글씨) 또는
 // 필름 날짜(사진 그대로 + 옛날 필름 카메라처럼 오른쪽 아래 주황 날짜)
-import { FRAME_COLORS, FONT, drawCover, dateText } from "./fourcut.js";
+import { FRAME_COLORS, FONT, drawCover, dateText, fillFrame } from "./fourcut.js";
 
 export const SINGLE_LAYOUTS = [
   { id: "polaroid", name: "폴라로이드" },
@@ -17,8 +17,7 @@ function polaroid(image, colorId, caption, date) {
   canvas.width = PHOTO + SIDE * 2;
   canvas.height = SIDE + PHOTO + BOTTOM;
   const ctx = canvas.getContext("2d");
-  ctx.fillStyle = C.bg;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  fillFrame(ctx, C, canvas.width, canvas.height);
   drawCover(ctx, image, SIDE, SIDE, PHOTO, PHOTO);
 
   const top = SIDE + PHOTO;

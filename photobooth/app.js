@@ -8,7 +8,7 @@
 //               &sticker=<id> &bg=<id> (처음 스티커·배경) &hand (손으로 찍기 켜기)
 import { EFFECTS, PAGE_SIZE } from "./effects.js";
 import { createRenderer } from "./renderer.js";
-import { LAYOUTS, FRAME_COLORS, composeFourCut } from "./fourcut.js";
+import { LAYOUTS, FRAME_COLORS, composeFourCut, swatch } from "./fourcut.js";
 import { SINGLE_LAYOUTS, composeSingle } from "./single.js";
 import { STICKERS, drawSticker } from "./stickers.js";
 import { BACKGROUNDS, loadBackground, loadPhoto } from "./backgrounds.js";
@@ -544,8 +544,11 @@ function renderResult() {
   $("caption").classList.toggle("hidden", plain);
 }
 
+// 결과 프레임은 처음에 지금 모드 테마와 같은 금속 박으로 나온다 (다른 색은 골라서 바꾼다)
+const THEME_FRAME = { single: "gold", four: "silver", boomerang: "rose" };
+
 function openResult(kind, shots, stamp) {
-  Object.assign(result, { kind, shots, stamp, layout: lastLayout[kind] });
+  Object.assign(result, { kind, shots, stamp, layout: lastLayout[kind], color: THEME_FRAME[mode] });
   $("layouts").replaceChildren(
     ...RESULT_KINDS[kind].layouts.map((l) => {
       const b = document.createElement("button");
@@ -592,7 +595,7 @@ $("colors").replaceChildren(
     const b = document.createElement("button");
     b.type = "button";
     b.dataset.id = c.id;
-    b.style.background = c.bg;
+    b.style.background = swatch(c);
     b.setAttribute("aria-label", c.name);
     b.addEventListener("click", () => {
       result.color = c.id;
